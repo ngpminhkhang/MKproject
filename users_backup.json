@@ -1,1 +1,20 @@
-[{"model": "auth.user", "pk": 1, "fields": {"password": "pbkdf2_sha256$1000000$JBYPFmTbyqBi05Qvtd44dP$lfZi7uLwLPAnEvoAWKLPNKVZrf4NUJ3EFg6yGMs81JE=", "last_login": "2025-09-12T17:52:25.873Z", "is_superuser": true, "username": "admin", "first_name": "", "last_name": "", "email": "abcadmin@gmail.com", "is_staff": true, "is_active": true, "date_joined": "2025-08-28T01:00:10.552Z", "groups": [], "user_permissions": []}}]
+[
+    {
+        "model": "auth.user",
+        "pk": 1,
+        "fields": {
+            "password": "pbkdf2_sha256$720000$<hash>",
+            "last_login": null,
+            "is_superuser": true,
+            "username": "admin",
+            "first_name": "",
+            "last_name": "",
+            "email": "ngpminhkhang@gmail.com",
+            "is_staff": true,
+            "is_active": true,
+            "date_joined": "2025-09-12T08:00:00Z",
+            "groups": [],
+            "user_permissions": []
+        }
+    }
+]
