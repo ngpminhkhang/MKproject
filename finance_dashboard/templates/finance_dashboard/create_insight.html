@@ -1,0 +1,61 @@
+{% extends "finance_dashboard/base.html" %}
+{% load static %}
+
+{% block title %}Create Insight{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h3>Create New Insight</h3>
+    {% if portfolio %}
+    <p><strong>Portfolio:</strong> {{ portfolio.name }}</p>
+    {% endif %}
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="mb-3">
+            {{ form.title.label_tag }} 
+            {{ form.title|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.summary.label_tag }} 
+            {{ form.summary|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.category.label_tag }} 
+            {{ form.category|add_class:"form-select" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.result.label_tag }} 
+            {{ form.result|add_class:"form-select" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.reason.label_tag }} 
+            {{ form.reason|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.analysis.label_tag }} 
+            {{ form.analysis|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.lessons.label_tag }} 
+            {{ form.lessons|add_class:"form-control" }}
+        </div>
+
+        <div class="mb-3">
+            {{ form.metrics.label_tag }} 
+            {{ form.metrics|add_class:"form-control" placeholder:"JSON format, e.g., {\"pnl\":100, \"drawdown\":5}" }}
+        </div>
+
+        {{ form.portfolio_ref }} <!-- hidden input -->
+
+        <button type="submit" class="btn btn-primary">Save Insight</button>
+        <a href="{% url 'insights' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

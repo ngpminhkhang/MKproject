@@ -1,0 +1,294 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Insights{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-2 p-2">
+
+  <!-- Search & Filters -->
+  <form id="insight-search-form" method="get" action="{% url 'search_insights' %}" hx-get="{% url 'search_insights' %}" hx-target="#insight-results" hx-push-url="true" hx-trigger="input changed delay:400ms, submit">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Search</label>
+        {% render_field form.q class="form-control" placeholder="Title, content, tags..." %}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">Result</label>
+        {% render_field form.result class="form-select" %}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">From</label>
+        {% render_field form.date_from class="form-control" %}
+      </div>
+      <div class="col-md-2">
+        <label class="form-label">To</label>
+        {% render_field form.date_to class="form-control" %}
+      </div>
+    </div>
+    <div class="mt-2">
+      <button class="btn btn-primary me-2" type="submit">Apply</button>
+      <a class="btn btn-outline-secondary" href="{% url 'insights' %}">Reset</a>
+    </div>
+  </form>
+
+  <!-- Category Tabs -->
+  <ul class="nav nav-tabs mt-3" id="ins-tabs">
+    <li class="nav-item">
+      <a class="nav-link {% if not request.GET.category %}active{% endif %}" 
+         hx-get="{% url 'search_insights' %}" 
+         hx-vals='{"category": ""}' 
+         hx-include="#insight-search-form" 
+         hx-target="#insight-results" 
+         hx-push-url="true">All</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.GET.category == 'currency' %}active{% endif %}" 
+         hx-get="{% url 'search_insights' %}" 
+         hx-vals='{"category": "currency"}' 
+         hx-include="#insight-search-form" 
+         hx-target="#insight-results" 
+         hx-push-url="true">Currency</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.GET.category == 'stock' %}active{% endif %}" 
+         hx-get="{% url 'search_insights' %}" 
+         hx-vals='{"category": "stock"}' 
+         hx-include="#insight-search-form" 
+         hx-target="#insight-results" 
+         hx-push-url="true">Stock</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.GET.category == 'summary' %}active{% endif %}" 
+         hx-get="{% url 'search_insights' %}" 
+         hx-vals='{"category": "summary"}' 
+         hx-include="#insight-search-form" 
+         hx-target="#insight-results" 
+         hx-push-url="true">Summary</a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link {% if request.GET.category == 'other' %}active{% endif %}" 
+         hx-get="{% url 'search_insights' %}" 
+         hx-vals='{"category": "other"}' 
+         hx-include="#insight-search-form" 
+         hx-target="#insight-results" 
+         hx-push-url="true">Other</a>
+    </li>
+  </ul>
+
+  <!-- Page Header -->
+  <div class="d-flex justify-content-between align-items-center mt-3 mb-3">
+    <h2>Insights</h2>
+    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addInsightModal">Add Insight</button>
+  </div>
+
+  <!-- Results -->
+  <div id="insight-results" class="mt-3">
+    {% include 'finance_dashboard/partials/_insight_list.html' %}
+  </div>
+
+  <!-- Add Insight Modal -->
+  <div class="modal fade" id="addInsightModal" tabindex="-1" aria-labelledby="addInsightModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{% url 'create_insight' %}" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="addInsightModalLabel">Add New Insight</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              {% render_field insight_form.title class="form-control" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              {% render_field insight_form.category class="form-select" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Summary</label>
+              {% render_field insight_form.summary class="form-control" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reason</label>
+              {% render_field insight_form.reason class="form-control" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Analysis</label>
+              {% render_field insight_form.analysis class="form-control" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Lessons</label>
+              {% render_field insight_form.lessons class="form-control" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Result</label>
+              {% render_field insight_form.result class="form-select" %}
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Metrics (JSON)</label>
+              {% render_field insight_form.metrics class="form-control" %}
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Edit Modals -->
+  {% for insight in page_obj.object_list %}
+  <div class="modal fade" id="editInsightModal{{ insight.id }}" tabindex="-1" aria-labelledby="editInsightModalLabel{{ insight.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <form action="{% url 'edit_insight' insight.id %}" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="editInsightModalLabel{{ insight.id }}">Edit Insight</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-3">
+              <label class="form-label">Title</label>
+              <input type="text" name="title" class="form-control" value="{{ insight.title }}">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Category</label>
+              <select name="category" class="form-select">
+                {% for val, disp in insight.CATEGORY_CHOICES %}
+                  <option value="{{ val }}" {% if insight.category == val %}selected{% endif %}>{{ disp }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Summary</label>
+              <textarea name="summary" class="form-control">{{ insight.summary }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Reason</label>
+              <textarea name="reason" class="form-control">{{ insight.reason }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Analysis</label>
+              <textarea name="analysis" class="form-control">{{ insight.analysis }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Lessons</label>
+              <textarea name="lessons" class="form-control">{{ insight.lessons }}</textarea>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Result</label>
+              <select name="result" class="form-select">
+                {% for val, disp in insight.RESULT_CHOICES %}
+                  <option value="{{ val }}" {% if insight.result == val %}selected{% endif %}>{{ disp }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Metrics (JSON)</label>
+              <textarea name="metrics" class="form-control">{{ insight.metrics }}</textarea>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Delete Modals -->
+  {% for insight in page_obj.object_list %}
+  <div class="modal fade" id="deleteInsightModal{{ insight.id }}" tabindex="-1" aria-labelledby="deleteInsightModalLabel{{ insight.id }}" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <form action="{% url 'delete_insight' insight.id %}" method="post">
+          {% csrf_token %}
+          <div class="modal-header">
+            <h5 class="modal-title" id="deleteInsightModalLabel{{ insight.id }}">Confirm Delete</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete "<strong>{{ insight.title }}</strong>"?
+          </div>
+          <div class="modal-footer">
+            <button type="submit" class="btn btn-danger">Delete</button>
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- Detail Modals -->
+  {% for insight in page_obj.object_list %}
+  <div class="modal fade" id="insightModal{{ insight.id }}" tabindex="-1" aria-labelledby="insightModalLabel{{ insight.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="insightModalLabel{{ insight.id }}">{{ insight.title }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Category:</strong> {{ insight.get_category_display }}</p>
+          <p><strong>Date:</strong> {{ insight.date|date:"M d, Y H:i" }}</p>
+          <p><strong>Tags:</strong> {{ insight.tags }}</p>
+          <hr>
+          <p><strong>Summary:</strong> {{ insight.summary }}</p>
+          <p><strong>Reason:</strong> {{ insight.reason }}</p>
+          <p><strong>Analysis:</strong> {{ insight.analysis }}</p>
+          <p><strong>Lessons:</strong> {{ insight.lessons }}</p>
+          <p><strong>Result:</strong> {{ insight.get_result_display }}</p>
+          <p><strong>Metrics:</strong> {{ insight.metrics }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <!-- JS for AJAX Submission (Modals) -->
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('form[action*="create_insight"], form[action*="edit_insight"], form[action*="delete_insight"]').forEach(form => {
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(this);
+        fetch(this.action, {
+          method: 'POST',
+          body: formData,
+          headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'X-CSRFToken': '{{ csrf_token }}'
+          }
+        })
+        .then(response => response.json())
+        .then(data => {
+          if (data.success) {
+            const modalId = this.closest('.modal').id;
+            const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+            modal.hide();
+            location.reload();  // Reload to update list
+          } else {
+            alert('Error: ' + JSON.stringify(data.errors || 'Unknown error'));
+          }
+        })
+        .catch(error => {
+          alert('Submission failed: ' + error);
+        });
+      });
+    });
+  });
+  </script>
+
+  <!-- HTMX (CDN) -->
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+
+  {% endblock %}

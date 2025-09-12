@@ -1,0 +1,35 @@
+{% if results %}
+<div class="card mt-3">
+    <div class="card-header">Search Results for "{{ query }}"</div>
+    <table class="table table-sm table-striped mb-0">
+        <thead>
+            <tr>
+                <th>Type</th>
+                <th>Symbol</th>
+                <th>Last</th>
+                <th>Change</th>
+                <th>Volume</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr hx-get="{% url 'chart' symbol=result.pair %}" hx-target="#chart-modal-container" hx-swap="innerHTML" data-bs-toggle="modal" data-bs-target="#chartModal" style="cursor: pointer;">
+                <td>{{ result.type }}</td>
+                <td>{{ result.pair }}</td>
+                <td>{{ result.data.last }}</td>
+                <td>
+                    <span class="{% if result.data.change > 0 %}text-success{% else %}text-danger{% endif %}">
+                        {% if result.data.change > 0 %}▲{% else %}▼{% endif %} {{ result.data.change|floatformat:2 }}%
+                    </span>
+                </td>
+                <td>{{ result.data.volume }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}
+<div class="alert alert-warning mt-3" role="alert">
+    No results found for "{{ query }}".
+</div>
+{% endif %}

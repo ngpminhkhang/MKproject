@@ -1,0 +1,333 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}Portfolio{% endblock %}
+
+{% block content %}
+<div class="container-fluid insights-full-width mt-2 p-2">
+
+  <!-- Container để load modal insight chi tiết -->
+  <div id="insight-modal-container"></div>
+
+  <!-- Summary Analytics Section -->
+  <div class="row text-center mb-2">
+    <div class="col-md-2">
+      <div class="card shadow-sm p-2">
+        <h6 class="text-sm">Total Trades</h6>
+        <h4>{{ analytics_data.0.total_trades|default:"0" }}</h4>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm p-2">
+        <h6 class="text-sm">Win Rate</h6>
+        <h4>{{ analytics_data.0.win_rate|default:"0" }}%</h4>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm p-2">
+        <h6 class="text-sm">Expectancy</h6>
+        <h4>{{ analytics_data.0.expectancy|default:"0" }}R</h4>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm p-2">
+        <h6 class="text-sm">Net PnL</h6>
+        <h4 class="text-success">{{ analytics_data.0.net_pnl|default:"0" }}</h4>
+      </div>
+    </div>
+    <div class="col-md-2">
+      <div class="card shadow-sm p-2">
+        <h6 class="text-sm">Max Drawdown</h6>
+        <h4 class="text-danger">{{ analytics_data.0.max_drawdown|default:"0" }}</h4>
+      </div>
+    </div>
+  </div>
+
+  <!-- Add Trade Form -->
+  <div class="card p-2 mb-2">
+    <h5 class="text-sm">Add Trade</h5>
+    <form method="post">
+      {% csrf_token %}
+      <div class="row g-1 align-items-end">
+        <div class="col-md-2 col-6">
+          {{ trade_form.portfolio.label_tag }}
+          {{ trade_form.portfolio|add_class:"form-control form-control-sm" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.forex_pair.label_tag }}
+          {{ trade_form.forex_pair|add_class:"form-control form-control-sm" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.side.label_tag }}
+          {{ trade_form.side|add_class:"form-control form-control-sm" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.entry.label_tag }}
+          {{ trade_form.entry|add_class:"form-control form-control-sm w-75" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.exit.label_tag }}
+          {{ trade_form.exit|add_class:"form-control form-control-sm w-75" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.stoploss.label_tag }}
+          {{ trade_form.stoploss|add_class:"form-control form-control-sm w-75" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.qty.label_tag }}
+          {{ trade_form.qty|add_class:"form-control form-control-sm w-75" }}
+        </div>
+      </div>
+      <div class="row g-1 mt-1 align-items-end">
+        <div class="col-md-2 col-6">
+          {{ trade_form.date.label_tag }}
+          {{ trade_form.date|add_class:"form-control form-control-sm" }}
+        </div>
+        <div class="col-md-2 col-6">
+          {{ trade_form.trade_type.label_tag }}
+          {{ trade_form.trade_type|add_class:"form-control form-control-sm" }}
+        </div>
+        <div class="col-md-4 col-12">
+          {{ trade_form.notes.label_tag }}
+          {{ trade_form.notes|add_class:"form-control form-control-sm notes-textarea" }}
+        </div>
+        <div class="col-md-4 col-12">
+          {{ trade_form.ref.label_tag }}
+          {{ trade_form.ref|add_class:"form-control form-control-sm" }}
+        </div>
+      </div>
+      <div class="row mt-1">
+        <div class="col-md-2 col-6 align-self-end">
+          <button type="submit" class="btn btn-primary btn-sm w-100">Save</button>
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <!-- Portfolio List with Add Insight Buttons -->
+  <div class="card p-2 mb-2">
+    <h5 class="text-sm">Portfolios</h5>
+    <div class="row">
+      {% for portfolio in portfolios %}
+      <div class="col-md-4 mb-2">
+        <div class="card shadow-sm p-2">
+          <div class="d-flex justify-content-between align-items-center">
+            <h6 class="text-sm mb-0">
+              {% if portfolio.trades.first %}
+                <a href="{% url 'details' portfolio.trades.first.forex_pair.pair %}" class="text-decoration-none">
+                  {{ portfolio.name }}
+                </a>
+              {% else %}
+                {{ portfolio.name }}
+              {% endif %}
+            </h6>
+            <button class="btn btn-sm btn-outline-primary" data-bs-toggle="modal" data-bs-target="#createInsightModal{{ portfolio.id }}">
+              Add Insight
+            </button>
+          </div>
+          <div class="mt-1">
+            <span class="text-sm text-muted">Trades: {{ portfolio.trades.count }}</span>
+          </div>
+          {% if portfolio.ref_insight %}
+          <div class="mt-1">
+            <small class="text-muted">Linked Insight:</small>
+            <a href="{% url 'insight_modal' portfolio.ref_insight.pk %}"
+               hx-get="{% url 'insight_modal' portfolio.ref_insight.pk %}"
+               hx-target="#insight-modal-container"
+               hx-swap="innerHTML"
+               class="text-decoration-none text-primary text-sm">
+              {{ portfolio.ref_insight.title|truncatechars:30 }}
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Trades Table -->
+  <div class="card p-2">
+    <div class="d-flex justify-content-between align-items-center mb-1">
+      <h5 class="text-sm">Trades</h5>
+      <div>
+        <a class="btn btn-outline-secondary btn-sm {% if active_tab == 'All' %}active{% endif %}"
+           href="?type=All">All</a>
+        <a class="btn btn-outline-success btn-sm {% if active_tab == 'Live' %}active{% endif %}"
+           href="?type=Live">Live</a>
+        <a class="btn btn-outline-info btn-sm {% if active_tab == 'Backtest' %}active{% endif %}"
+           href="?type=Backtest">Backtest</a>
+      </div>
+    </div>
+    <table class="table table-striped table-sm">
+      <thead>
+        <tr>
+          <th class="text-sm">Date</th>
+          <th class="text-sm">Portfolio</th>
+          <th class="text-sm">Symbol</th>
+          <th class="text-sm">Side</th>
+          <th class="text-sm">Entry</th>
+          <th class="text-sm">Exit</th>
+          <th class="text-sm">Stoploss</th>
+          <th class="text-sm">Qty</th>
+          <th class="text-sm">PnL</th>
+          <th class="text-sm">Type</th>
+          <th class="text-sm">Ref / Insight</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for portfolio in portfolios %}
+          {% for trade in portfolio.trades.all %}
+          <tr>
+            <td class="text-sm">{{ trade.date }}</td>
+            <td class="text-sm">{{ portfolio.name }}</td>
+            <td class="text-sm">
+              <a href="{% url 'details' trade.forex_pair.pair %}" class="text-decoration-none">
+                {{ trade.forex_pair.pair }}
+              </a>
+            </td>
+            <td class="text-sm">{{ trade.side }}</td>
+            <td class="text-sm">{{ trade.entry }}</td>
+            <td class="text-sm">{{ trade.exit }}</td>
+            <td class="text-sm">{{ trade.stoploss|default:"-" }}</td>
+            <td class="text-sm">{{ trade.qty }}</td>
+            <td class="text-sm {% if trade.pnl > 0 %}text-success{% else %}text-danger{% endif %}">{{ trade.pnl }}</td>
+            <td class="text-sm">{{ trade.trade_type }}</td>
+            <td class="text-sm">
+              {% if portfolio.ref_insight %}
+                <a href="{% url 'insight_modal' portfolio.ref_insight.pk %}"
+                   hx-get="{% url 'insight_modal' portfolio.ref_insight.pk %}"
+                   hx-target="#insight-modal-container"
+                   hx-swap="innerHTML"
+                   class="text-decoration-none">
+                  {{ portfolio.ref_insight.title|truncatechars:40 }}
+                </a>
+              {% else %}
+                {% if trade.ref and trade.ref|cut:'Insight #' %}
+                  <a href="{% url 'insight_modal' trade.ref|cut:'Insight #' %}"
+                     hx-get="{% url 'insight_modal' trade.ref|cut:'Insight #' %}"
+                     hx-target="#insight-modal-container"
+                     hx-swap="innerHTML"
+                     class="text-decoration-none text-info">
+                    Ref/Insight
+                  </a>
+                {% else %}
+                  <a href="#"
+                     class="text-success text-decoration-none"
+                     data-bs-toggle="modal"
+                     data-bs-target="#createInsightModal{{ portfolio.id }}">
+                    + Add Insight
+                  </a>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        {% empty %}
+          <tr><td colspan="11" class="text-center text-sm">No trades yet</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- Modals for Add Insight -->
+{% for portfolio in portfolios %}
+<div class="modal fade" id="createInsightModal{{ portfolio.id }}" tabindex="-1" aria-labelledby="createInsightModalLabel{{ portfolio.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="createInsightModalLabel{{ portfolio.id }}">Add Insight for {{ portfolio.name }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <form method="POST" action="{% url 'create_insight_for_portfolio' portfolio.id %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="id_title_{{ portfolio.id }}" class="form-label">Title</label>
+            <input type="text" class="form-control" id="id_title_{{ portfolio.id }}" name="title" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_summary_{{ portfolio.id }}" class="form-label">Summary</label>
+            <textarea class="form-control" id="id_summary_{{ portfolio.id }}" name="summary" rows="2" required></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="id_category_{{ portfolio.id }}" class="form-label">Category</label>
+            <select class="form-select" id="id_category_{{ portfolio.id }}" name="category" required>
+              {% for value, label in insight_form.category.field.choices %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="id_result_{{ portfolio.id }}" class="form-label">Result</label>
+            <select class="form-select" id="id_result_{{ portfolio.id }}" name="result" required>
+              {% for value, label in insight_form.result.field.choices %}
+                <option value="{{ value }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="id_reason_{{ portfolio.id }}" class="form-label">Reason</label>
+            <textarea class="form-control" id="id_reason_{{ portfolio.id }}" name="reason" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="id_analysis_{{ portfolio.id }}" class="form-label">Analysis</label>
+            <textarea class="form-control" id="id_analysis_{{ portfolio.id }}" name="analysis" rows="3"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="id_lessons_{{ portfolio.id }}" class="form-label">Lessons</label>
+            <textarea class="form-control" id="id_lessons_{{ portfolio.id }}" name="lessons" rows="2"></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="id_metrics_{{ portfolio.id }}" class="form-label">Metrics (JSON format)</label>
+            <textarea class="form-control" id="id_metrics_{{ portfolio.id }}" name="metrics" rows="2" placeholder='{"pnl":100, "drawdown":5}'></textarea>
+          </div>
+          <input type="hidden" name="portfolio_ref" value="{{ portfolio.id }}">
+          <button type="submit" class="btn btn-primary">Save Insight</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endfor %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('form[action*="create_insight_for_portfolio"]').forEach(form => {
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      const formData = new FormData(this);
+      
+      fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          'X-Requested-With': 'XMLHttpRequest',
+          'X-CSRFToken': '{{ csrf_token }}'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          const modalId = this.closest('.modal').id;
+          const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+          modal.hide();
+          alert('Insight created successfully!');
+          location.reload();
+        } else {
+          alert('Error: ' + JSON.stringify(data.errors || 'Unknown error'));
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        alert('Submission failed: ' + error);
+      });
+    });
+  });
+});
+</script>
+
+{% endblock %}

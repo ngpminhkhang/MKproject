@@ -1,0 +1,261 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Dashboard - MK Project{% endblock %}
+
+{% block content %}
+<div class="row g-2 mt-2">
+    <!-- Left Column: Indices + Forex Table -->
+    <div class="col-md-4">
+        <!-- Indices Cards -->
+        <div class="card mb-3">
+            <div class="card-header">Indices</div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <div class="border rounded p-2 text-center">
+                            <h6 class="mb-1">VIX</h6>
+                            <p class="h5 mb-0">{{ vix|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <div class="border rounded p-2 text-center">
+                            <h6 class="mb-1">S&P 500</h6>
+                            <p class="h5 mb-0">{{ indices.SP500|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <div class="border rounded p-2 text-center">
+                            <h6 class="mb-1">Gold</h6>
+                            <p class="h5 mb-0">{{ gold|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-2">
+                        <div class="border rounded p-2 text-center">
+                            <h6 class="mb-1">DXY</h6>
+                            <p class="h5 mb-0">{{ indices.DXY|default:"N/A" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forex Table -->
+        <div class="card">
+            <div class="card-header">Major Forex Pairs</div>
+            <table class="table table-sm table-striped mb-0">
+                <thead>
+                    <tr>
+                        <th>Pair</th>
+                        <th>Last</th>
+                        <th>Change</th>
+                        <th>Trend</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fx in forex_data %}
+                    <tr>
+                        <td>{{ fx.pair }}</td>
+                        <td>{{ fx.last|floatformat:4|default:"N/A" }}</td>
+                        <td>
+                            {% if fx.change %}
+                                {% if fx.change > 0 %}
+                                    <span class="text-success">▲ {{ fx.change }}%</span>
+                                {% else %}
+                                    <span class="text-danger">▼ {{ fx.change }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td><canvas id="spark_{{ fx.pair }}" width="80" height="25"></canvas></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Middle Column: Chart -->
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Chart ({{ chart.symbol|default:"EURUSD" }})</span>
+                <div class="input-group input-group-sm w-25">
+                    <select class="form-select form-select-sm ms-2" id="pairSelect" style="min-width: 120px;">
+                        <option value="EURUSD" selected>EURUSD</option>
+                        <option value="GBPUSD">GBPUSD</option>
+                        <option value="USDJPY">USDJPY</option>
+                        <option value="USDCHF">USDCHF</option>
+                        <option value="AUDUSD">AUDUSD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chart_{{ chart.symbol|default:'eurusd'|slugify }}"></canvas>
+                </div>
+                <div class="mt-2 small text-muted">
+                    High: <span id="chartHigh">{{ chart.high|default:"N/A" }}</span> | Low: <span id="chartLow">{{ chart.low|default:"N/A" }}</span> | Volume: <span id="chartVolume">{{ chart.volume|default:"N/A" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Risk-On/Off + ETF Flows -->
+    <div class="col-md-4">
+        <!-- Risk-On/Off -->
+        <div class="card mb-3">
+            <div class="card-header">Risk Sentiment</div>
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-center"> <!-- Container để căn giữa badge -->
+                    {% if risk_on %}
+                        <span class="badge bg-success p-1">Risk-On ✅</span>
+                    {% else %}
+                        <span class="badge bg-danger p-1">Risk-Off ⚠️</span>
+                    {% endif %}
+                </div>
+                <ul class="mt-2 text-start small">
+                    <li>VIX: {{ vix|default:"N/A" }}</li>
+                    <li>Gold: {{ gold|default:"N/A" }}</li>
+                    <li>US10Y: {{ us10y|default:"N/A" }}</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ETF Flows -->
+        <div class="card">
+            <div class="card-header">ETF Flows</div>
+            <ul class="list-group list-group-flush">
+                {% for etf in etf_flows %}
+                <li class="list-group-item d-flex justify-content-between">
+                    <span>{{ etf.name }}</span>
+                    {% if etf.flow %}
+                        {% if etf.flow > 0 %}
+                            <span class="text-success">+{{ etf.flow }}M</span>
+                        {% elif etf.flow < 0 %}
+                            <span class="text-danger">{{ etf.flow }}M</span>
+                        {% else %}
+                            <span class="text-muted">{{ etf.flow }}M</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-muted">N/A</span>
+                    {% endif %}
+                </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+  const ctx = document.getElementById("chart_{{ chart.symbol|default:'eurusd'|slugify }}");
+  if (ctx) {
+    new Chart(ctx, {
+      type: "line",
+      data: {
+        labels: {{ chart.labels|safe }},
+        datasets: [{
+          label: "{{ chart.symbol }}",
+          data: {{ chart.values|safe }},
+          borderWidth: 2,
+          borderColor: "#0d6efd",
+          fill: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        aspectRatio: 1.5,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { ticks: { maxRotation: 45, minRotation: 45 } },
+          y: { beginAtZero: false }
+        }
+      }
+    });
+  }
+
+  // Mini-sparkline Forex
+  {% for fx in forex_data %}
+    const ctx_{{ fx.pair }} = document.getElementById("spark_{{ fx.pair }}");
+    {% if fx.history %}
+      const data_{{ fx.pair }} = {{ fx.history|safe }};
+    {% else %}
+      const data_{{ fx.pair }} = [{% if fx.last %}{{ fx.last }}{% else %}0{% endif %}];
+    {% endif %}
+    new Chart(ctx_{{ fx.pair }}, {
+      type: "line",
+      data: {
+        labels: data_{{ fx.pair }}.map((_, i) => i),
+        datasets: [{
+          data: data_{{ fx.pair }},
+          borderColor: data_{{ fx.pair }}[0] <= data_{{ fx.pair }}[data_{{ fx.pair }}.length-1] ? "#198754" : "#dc3545",
+          borderWidth: 1,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { display: false }, y: { display: false } }
+      }
+    });
+  {% endfor %}
+});
+</script>
+{% endblock %}
+
+{% block extra_head %}
+<style>
+    .chart-container {
+        position: relative;
+        width: 100%;
+        height: 100%;
+    }
+    .chart-container canvas {
+        width: 100% !important;
+        height: 100% !important;
+    }
+    .card.h-100 {
+        display: flex;
+        flex-direction: column;
+    }
+    .card-body {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    .chart-container {
+        flex: 1;
+    }
+    /* Tùy chỉnh badge để thu ngắn chiều ngang và căn giữa */
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.15rem 0.3rem !important;
+        display: inline-block !important;
+        width: fit-content !important;
+        max-width: max-content !important;
+        white-space: nowrap !important;
+    }
+</style>
+{% endblock %}
+
+{% block subnav %}
+<ul class="nav nav-tabs border-bottom-0 sub-nav">
+    <li class="nav-item">
+        <a class="nav-link active" href="{% url 'analysis' %}#macro-overview">Market Overview</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'portfolio' %}">Portfolio</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" href="{% url 'insights' %}">Insights</a>
+    </li>
+</ul>
+{% endblock %}

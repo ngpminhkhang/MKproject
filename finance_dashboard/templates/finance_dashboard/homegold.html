@@ -1,0 +1,171 @@
+{% extends "finance_dashboard/base.html" %}
+{% block title %}Dashboard - MK Project{% endblock %}
+
+{% block content %}
+<div class="row g-2 mt-2">
+
+  <!-- Left Column: Indices + Forex Table -->
+  <div class="col-md-4">
+    <!-- Indices Cards -->
+    <div class="card mb-3">
+      <div class="card-header">Indices</div>
+      <div class="card-body">
+        <div class="row">
+          {% for name, value in indices.items %}
+          <div class="col-6 mb-2">
+            <div class="border rounded p-2 text-center">
+              <h6 class="mb-1">{{ name }}</h6>
+              <p class="h5 mb-0">
+                {% if value %}{{ value|floatformat:2 }}{% else %}N/A{% endif %}
+              </p>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Forex Table -->
+    <div class="card">
+      <div class="card-header">Major Forex Pairs</div>
+      <table class="table table-sm table-striped mb-0">
+        <thead>
+          <tr>
+            <th>Pair</th>
+            <th>Last</th>
+            <th>Change</th>
+            <th>Trend</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fx in forex_data %}
+          <tr>
+            <td>{{ fx.pair }}</td>
+            <td>{% if fx.last %}{{ fx.last }}{% else %}N/A{% endif %}</td>
+            <td>
+              {% if fx.change != None %}
+                {% if fx.change > 0 %}
+                  <span class="text-success">▲ {{ fx.change }}%</span>
+                {% else %}
+                  <span class="text-danger">▼ {{ fx.change }}%</span>
+                {% endif %}
+              {% else %}
+                N/A
+              {% endif %}
+            </td>
+            <td>
+              <canvas id="spark_{{ fx.pair }}" width="80" height="25"></canvas>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Middle Column: Chart -->
+  <div class="col-md-5">
+    <div class="card">
+      <div class="card-header">Chart ({{ chart.symbol }})</div>
+      <div class="card-body">
+        <canvas id="chart_{{ chart.symbol|slugify }}"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right Column: Risk-On/Off + ETF Flows -->
+  <div class="col-md-3">
+    <!-- Risk-On/Off -->
+    <div class="card mb-3">
+      <div class="card-header">Risk Sentiment</div>
+      <div class="card-body text-center">
+        {% if risk_on %}
+          <span class="badge bg-success p-2">Risk-On ✅</span>
+        {% else %}
+          <span class="badge bg-danger p-2">Risk-Off ❌</span>
+        {% endif %}
+        <ul class="mt-2 text-start small">
+          <li>VIX: {% if vix %}{{ vix }}{% else %}N/A{% endif %}</li>
+          <li>Gold: {% if gold %}{{ gold }}{% else %}N/A{% endif %}</li>
+          <li>US10Y: {% if us10y %}{{ us10y }}{% else %}N/A{% endif %}</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- ETF Flows -->
+    <div class="card">
+      <div class="card-header">ETF Flows</div>
+      <ul class="list-group list-group-flush">
+        {% for etf in etf_flows %}
+        <li class="list-group-item d-flex justify-content-between">
+          <span>{{ etf.name }}</span>
+          <span class="{% if etf.flow > 0 %}text-success{% else %}text-danger{% endif %}">
+            {{ etf.flow }}M
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Chart chính EURUSD
+document.addEventListener("DOMContentLoaded", function(){
+  const ctx = document.getElementById("chart_{{ chart.symbol|slugify }}");
+  new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: {{ chart.labels|safe }},
+      datasets: [{
+        label: "{{ chart.symbol }}",
+        data: {{ chart.values|safe }},
+        borderWidth: 2,
+        borderColor: "#0d6efd",
+        fill: false
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { maxRotation: 45, minRotation: 45 } },
+        y: { beginAtZero: false }
+      }
+    }
+  });
+
+  // Mini-sparkline Forex
+  {% for fx in forex_data %}
+    const ctx_{{ fx.pair }} = document.getElementById("spark_{{ fx.pair }}");
+    {% if fx.history %}
+      const data_{{ fx.pair }} = {{ fx.history|safe }};
+    {% else %}
+      const data_{{ fx.pair }} = [{% if fx.last %}{{ fx.last }}{% else %}0{% endif %}];
+    {% endif %}
+    new Chart(ctx_{{ fx.pair }}, {
+      type: "line",
+      data: {
+        labels: data_{{ fx.pair }}.map((_, i) => i),
+        datasets: [{
+          data: data_{{ fx.pair }},
+          borderColor: data_{{ fx.pair }}[0] <= data_{{ fx.pair }}[data_{{ fx.pair }}.length-1] ? "#198754" : "#dc3545",
+          borderWidth: 1,
+          fill: false,
+          tension: 0.2,
+          pointRadius: 0
+        }]
+      },
+      options: {
+        responsive: false,
+        plugins: { legend: { display: false } },
+        scales: { x: { display: false }, y: { display: false } }
+      }
+    });
+  {% endfor %}
+});
+</script>
+{% endblock %}

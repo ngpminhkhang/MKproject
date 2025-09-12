@@ -1,0 +1,27 @@
+<!-- Partial: chỉ chứa Bootstrap modal -->
+<div class="modal fade" id="insightModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">{{ insight.title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+
+      <div class="modal-body">
+        <p class="text-muted small mb-2">
+          {% if insight.author %}By {{ insight.author }} — {% endif %}
+          {{ insight.created_at|date:"Y-m-d H:i" }}
+        </p>
+
+        <div class="insight-content">
+          {{ insight.content|safe }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <a href="{% url 'insights' %}" class="btn btn-link">View All Insights</a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

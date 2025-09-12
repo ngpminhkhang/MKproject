@@ -1,0 +1,58 @@
+<div class="modal fade show" id="insightModal{{ insight.id }}" tabindex="-1" style="display:block;" aria-modal="true" role="dialog">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      
+      <!-- Header -->
+      <div class="modal-header">
+        <h5 class="modal-title">Insight: {{ insight.title }}</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"
+                onclick="document.getElementById('insight-modal-container').innerHTML = ''"></button>
+      </div>
+
+      <!-- Body -->
+      <div class="modal-body">
+        <div class="mb-3">
+          <strong>Summary:</strong>
+          <p>{{ insight.summary }}</p>
+        </div>
+        <div class="mb-3">
+          <strong>Category:</strong> {{ insight.category }}
+        </div>
+        <div class="mb-3">
+          <strong>Result:</strong> {{ insight.result }}
+        </div>
+        <div class="mb-3">
+          <strong>Reason:</strong>
+          <p>{{ insight.reason|linebreaks }}</p>
+        </div>
+        <div class="mb-3">
+          <strong>Analysis:</strong>
+          <p>{{ insight.analysis|linebreaks }}</p>
+        </div>
+        <div class="mb-3">
+          <strong>Lessons:</strong>
+          <p>{{ insight.lessons|linebreaks }}</p>
+        </div>
+        {% if insight.metrics %}
+        <div class="mb-3">
+          <strong>Metrics:</strong>
+          <pre class="bg-light p-2">{{ insight.metrics|safe }}</pre>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-footer">
+        <a href="{% url 'edit_insight' insight.id %}" class="btn btn-warning btn-sm">Edit</a>
+        <form method="post" action="{% url 'delete_insight' insight.id %}" style="display:inline;">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+        </form>
+        <button type="button" class="btn btn-secondary btn-sm"
+                onclick="document.getElementById('insight-modal-container').innerHTML = ''"
+                data-bs-dismiss="modal">Close</button>
+      </div>
+
+    </div>
+  </div>
+</div>
