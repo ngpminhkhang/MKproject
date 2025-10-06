@@ -82,7 +82,10 @@ WSGI_APPLICATION = 'config.wsgi.application'
 if 'DATABASE_URL' in os.environ:
     # Production (Render)
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600, ssl_require=True)
+        'default': dj_database_url.config(
+            conn_max_age=600,
+            ssl_require=True
+        )
     }
 else:
     # Local (SQLite)
@@ -91,6 +94,13 @@ else:
             'ENGINE': 'django.db.backends.sqlite3',
             'NAME': BASE_DIR / 'db.sqlite3',
         }
+    }
+
+# Fallback nếu DATABASE_URL không tồn tại
+if 'DATABASE_URL' not in os.environ:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 
 # Password validation
