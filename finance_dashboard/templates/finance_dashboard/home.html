@@ -1,0 +1,597 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}Home{% endblock %}
+
+{% block extra_head %}
+<style>
+    /* FIX LỖI THANH CUỘN NGANG */
+    .main-content {
+        display: flex;
+        gap: 15px;
+        margin: 0;
+        padding: 0 15px;
+        width: 100%;
+        max-width: 100%;
+        box-sizing: border-box;
+        overflow-x: hidden; /* QUAN TRỌNG: Ẩn thanh cuộn ngang */
+    }
+
+    .left-column {
+        flex: 0 0 30%;
+        max-width: 30%;
+        box-sizing: border-box;
+    }
+
+    .middle-column {
+        flex: 0 0 50%;
+        max-width: 50%;
+        box-sizing: border-box;
+    }
+
+    .right-column {
+        flex: 0 0 20%;
+        max-width: 20%;
+        box-sizing: border-box;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 450px;
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .card {
+        margin-bottom: 15px;
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        width: 100%;
+        box-sizing: border-box;
+    }
+
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.4rem 0.8rem;
+    }
+
+    /* Giảm độ cao của tất cả các card-header */
+    .card-header {
+        padding: 0.3rem 0.6rem !important;
+        font-size: 0.85rem !important;
+        min-height: auto !important;
+        line-height: 1.2 !important;
+        box-sizing: border-box;
+    }
+
+    /* Đảm bảo tất cả các header đều có cùng chiều cao */
+    .card-header.bg-primary,
+    .card-header.bg-success,
+    .card-header.bg-warning,
+    .card-header.bg-info,
+    .card-header.bg-dark {
+        padding: 0.3rem 0.6rem !important;
+        font-size: 0.85rem !important;
+        min-height: auto !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Đặc biệt cho header của chart */
+    .card-header.d-flex {
+        padding: 0.3rem 0.6rem !important;
+        font-size: 0.85rem !important;
+        min-height: auto !important;
+        line-height: 1.2 !important;
+    }
+
+    /* Điều chỉnh select box trong header chart */
+    .card-header .form-select-sm {
+        padding: 0.2rem 1.5rem 0.2rem 0.5rem;
+        font-size: 0.8rem;
+    }
+
+    /* Giảm font chữ cho các phần nội dung */
+    .card-body {
+        font-size: 0.85rem;
+        box-sizing: border-box;
+    }
+
+    .table {
+        font-size: 0.8rem;
+        width: 100%;
+    }
+
+    .table th,
+    .table td {
+        padding: 0.4rem 0.5rem;
+    }
+
+    .h5 {
+        font-size: 1rem;
+    }
+
+    .h6 {
+        font-size: 0.9rem;
+    }
+
+    .small {
+        font-size: 0.75rem;
+    }
+
+    .list-group-item {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.8rem;
+    }
+
+    /* Điều chỉnh các box trong Indices */
+    .border.rounded.p-2.text-center.bg-light {
+        padding: 0.5rem !important;
+        box-sizing: border-box;
+    }
+
+    .border.rounded.p-2.text-center.bg-light h6 {
+        font-size: 0.8rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .border.rounded.p-2.text-center.bg-light .h5 {
+        font-size: 0.95rem;
+    }
+
+    /* Responsive design cho mobile */
+    @media (max-width: 1200px) {
+        .main-content {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .left-column,
+        .middle-column,
+        .right-column {
+            flex: 0 0 100%;
+            max-width: 100%;
+        }
+        
+        .chart-container {
+            height: 400px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .main-content {
+            padding: 0 10px;
+            gap: 8px;
+        }
+        
+        .chart-container {
+            height: 350px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <!-- Left Column: Indices + Forex Table - 30% width -->
+    <div class="left-column">
+        <!-- Indices Cards -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">Indices</div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <h6 class="mb-1">VIX</h6>
+                            <p class="h5 mb-0 text-danger" id="vix-value">20.5</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <h6 class="mb-1">S&P 500</h6>
+                            <p class="h5 mb-0 text-success" id="sp500-value">4500</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <h6 class="mb-1">Gold</h6>
+                            <p class="h5 mb-0 text-warning" id="gold-value">1800</p>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="border rounded p-2 text-center bg-light">
+                            <h6 class="mb-1">DXY</h6>
+                            <p class="h5 mb-0 text-info" id="dxy-value">95.2</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Forex Table -->
+        <div class="card">
+            <div class="card-header bg-info text-white">Major Forex Pairs</div>
+            <div class="card-body p-0">
+                <table class="table table-sm table-striped mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Pair</th>
+                            <th>Last</th>
+                            <th>Change</th>
+                            <th>Trend</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><strong>EURUSD</strong></td>
+                            <td id="eurusd-last">1.1000</td>
+                            <td><span class="text-success">▲ 0.5%</span></td>
+                            <td><canvas id="spark_EURUSD" width="80" height="25"></canvas></td>
+                        </tr>
+                        <tr>
+                            <td><strong>GBPUSD</strong></td>
+                            <td id="gbpusd-last">1.3000</td>
+                            <td><span class="text-danger">▼ 0.2%</span></td>
+                            <td><canvas id="spark_GBPUSD" width="80" height="25"></canvas></td>
+                        </tr>
+                        <tr>
+                            <td><strong>USDJPY</strong></td>
+                            <td id="usdjpy-last">110.00</td>
+                            <td><span class="text-success">▲ 0.3%</span></td>
+                            <td><canvas id="spark_USDJPY" width="80" height="25"></canvas></td>
+                        </tr>
+                        <tr>
+                            <td><strong>USDCHF</strong></td>
+                            <td id="usdchf-last">0.9200</td>
+                            <td><span class="text-danger">▼ 0.1%</span></td>
+                            <td><canvas id="spark_USDCHF" width="80" height="25"></canvas></td>
+                        </tr>
+                        <tr>
+                            <td><strong>AUDUSD</strong></td>
+                            <td id="audusd-last">0.7500</td>
+                            <td><span class="text-success">▲ 0.4%</span></td>
+                            <td><canvas id="spark_AUDUSD" width="80" height="25"></canvas></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Column: Chart - 50% width -->
+    <div class="middle-column">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center bg-success text-white">
+                <span><i class="bi bi-graph-up me-2"></i>Chart</span>
+                <div class="input-group input-group-sm" style="width: auto;">
+                    <select class="form-select form-select-sm" id="pairSelect" style="min-width: 120px;">
+                        <option value="EURUSD" selected>EURUSD</option>
+                        <option value="GBPUSD">GBPUSD</option>
+                        <option value="USDJPY">USDJPY</option>
+                        <option value="USDCHF">USDCHF</option>
+                        <option value="AUDUSD">AUDUSD</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="chart_eurusd"></canvas>
+                </div>
+                <div class="mt-3 small text-muted text-center">
+                    <span class="me-3"><i class="bi bi-arrow-up text-success"></i> High: <strong id="chart-high">1.1050</strong></span>
+                    <span class="me-3"><i class="bi bi-arrow-down text-danger"></i> Low: <strong id="chart-low">1.0950</strong></span>
+                    <span><i class="bi bi-bar-chart"></i> Volume: <strong id="chart-volume">1.2M</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Risk-On/Off + ETF Flows - 20% width -->
+    <div class="right-column">
+        <!-- Risk-On/Off -->
+        <div class="card">
+            <div class="card-header bg-warning text-dark">Risk Sentiment</div>
+            <div class="card-body text-center">
+                <div class="d-flex justify-content-center mb-3">
+                    <span class="badge bg-success p-2 fs-6" id="risk-badge">Risk-On</span>
+                </div>
+                <ul class="list-unstyled text-start small">
+                    <li class="mb-2"><i class="bi bi-graph-up-arrow text-danger me-2"></i>VIX: <strong id="risk-vix">20.5</strong></li>
+                    <li class="mb-2"><i class="bi bi-currency-dollar text-warning me-2"></i>Gold: <strong id="risk-gold">1800</strong></li>
+                    <li class="mb-2"><i class="bi bi-percent text-info me-2"></i>US10Y: <strong id="risk-us10y">2.5%</strong></li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- ETF Flows -->
+        <div class="card">
+            <div class="card-header bg-dark text-white">ETF Flows</div>
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-arrow-up-right text-success me-2"></i>SPY</span>
+                        <span class="text-success fw-bold" id="etf-spy">+100M</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-arrow-down-right text-danger me-2"></i>QQQ</span>
+                        <span class="text-danger fw-bold" id="etf-qqq">-50M</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span><i class="bi bi-dash-circle text-muted me-2"></i>TLT</span>
+                        <span class="text-muted fw-bold" id="etf-tlt">0M</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener("DOMContentLoaded", function(){
+        console.log("Initializing dashboard with real data...");
+
+        // Hàm fetch dữ liệu thật từ backend
+        async function fetchRealData() {
+            try {
+                const response = await fetch('/api/market-data/');
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                return data;
+            } catch (error) {
+                console.error('Error fetching real data:', error);
+                return null;
+            }
+        }
+
+        // Hàm cập nhật UI với dữ liệu thật
+        function updateUIWithRealData(marketData) {
+            if (!marketData) return;
+
+            // Cập nhật indices
+            if (marketData.indices) {
+                document.getElementById('vix-value').textContent = marketData.indices.vix || '20.5';
+                document.getElementById('sp500-value').textContent = marketData.indices.sp500 || '4500';
+                document.getElementById('gold-value').textContent = marketData.indices.gold || '1800';
+                document.getElementById('dxy-value').textContent = marketData.indices.dxy || '95.2';
+            }
+
+            // Cập nhật risk sentiment
+            if (marketData.riskSentiment) {
+                const riskBadge = document.getElementById('risk-badge');
+                if (marketData.riskSentiment === 'on') {
+                    riskBadge.className = 'badge bg-success p-2 fs-6';
+                    riskBadge.textContent = 'Risk-On';
+                } else {
+                    riskBadge.className = 'badge bg-danger p-2 fs-6';
+                    riskBadge.textContent = 'Risk-Off';
+                }
+            }
+
+            // Cập nhật ETF flows
+            if (marketData.etfFlows) {
+                marketData.etfFlows.forEach(etf => {
+                    const element = document.getElementById('etf-' + etf.name.toLowerCase());
+                    if (element) {
+                        if (etf.flow > 0) {
+                            element.className = 'text-success fw-bold';
+                            element.textContent = '+' + etf.flow + 'M';
+                        } else if (etf.flow < 0) {
+                            element.className = 'text-danger fw-bold';
+                            element.textContent = etf.flow + 'M';
+                        } else {
+                            element.className = 'text-muted fw-bold';
+                            element.textContent = etf.flow + 'M';
+                        }
+                    }
+                });
+            }
+        }
+
+        // Tạo custom candlestick chart
+        async function createCustomCandlestickChart() {
+            const ctx = document.getElementById("chart_eurusd");
+            if (!ctx) return;
+
+            try {
+                // Lấy dữ liệu thật từ API
+                const marketData = await fetchRealData();
+                let candlestickData;
+
+                if (marketData && marketData.chartData) {
+                    candlestickData = marketData.chartData;
+                    updateUIWithRealData(marketData);
+                } else {
+                    // Fallback: dữ liệu mẫu với 33 nến
+                    console.log('Using sample data with 33 candles');
+                    candlestickData = generateSampleCandles(33);
+                }
+
+                // Chuẩn bị dữ liệu cho high-low lines và body
+                const highLowData = [];
+                const bodyData = [];
+                const colors = [];
+
+                candlestickData.forEach(item => {
+                    // High-low line (đường nối high và low)
+                    highLowData.push({
+                        x: item.time,
+                        y: [item.low, item.high]
+                    });
+
+                    // Body (thân nến - từ open đến close)
+                    const bodyStart = Math.min(item.open, item.close);
+                    const bodyEnd = Math.max(item.open, item.close);
+                    bodyData.push({
+                        x: item.time,
+                        y: [bodyStart, bodyEnd]
+                    });
+
+                    // Màu sắc: xanh nếu close >= open, đỏ nếu ngược lại
+                    colors.push(item.close >= item.open ? '#198754' : '#dc3545');
+                });
+
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        datasets: [
+                            {
+                                label: 'High-Low',
+                                data: highLowData,
+                                type: 'line',
+                                borderColor: '#6c757d',
+                                borderWidth: 1,
+                                pointRadius: 0,
+                                fill: false
+                            },
+                            {
+                                label: 'Body',
+                                data: bodyData,
+                                backgroundColor: colors,
+                                borderColor: colors,
+                                borderWidth: 1,
+                                barPercentage: 0.4,
+                                categoryPercentage: 0.8
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const datasetIndex = context.datasetIndex;
+                                        const dataIndex = context.dataIndex;
+                                        const item = candlestickData[dataIndex];
+                                        if (datasetIndex === 0) {
+                                            return [
+                                                'High: ' + item.high.toFixed(4),
+                                                'Low: ' + item.low.toFixed(4)
+                                            ];
+                                        } else {
+                                            return [
+                                                'Open: ' + item.open.toFixed(4),
+                                                'Close: ' + item.close.toFixed(4),
+                                                'Change: ' + (item.close - item.open).toFixed(4)
+                                            ];
+                                        }
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                type: 'category',
+                                ticks: {
+                                    maxRotation: 45,
+                                    minRotation: 45,
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            },
+                            y: {
+                                beginAtZero: false,
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toFixed(4);
+                                    },
+                                    font: {
+                                        size: 10
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log("Custom candlestick chart created successfully with " + candlestickData.length + " candles");
+            } catch (error) {
+                console.error('Error creating chart:', error);
+            }
+        }
+
+        // Hàm tạo dữ liệu nến mẫu với số lượng nến chỉ định
+        function generateSampleCandles(count) {
+            const candles = [];
+            let basePrice = 1.0900;
+            const startDate = new Date('2024-01-01');
+
+            for (let i = 0; i < count; i++) {
+                const date = new Date(startDate);
+                date.setDate(startDate.getDate() + i);
+
+                const open = basePrice;
+                const volatility = 0.002;
+                const change = (Math.random() - 0.5) * volatility;
+                const close = open + change;
+                const high = Math.max(open, close) + Math.random() * volatility * 0.5;
+                const low = Math.min(open, close) - Math.random() * volatility * 0.5;
+
+                candles.push({
+                    time: date.toISOString().split('T')[0],
+                    open: parseFloat(open.toFixed(4)),
+                    high: parseFloat(high.toFixed(4)),
+                    low: parseFloat(low.toFixed(4)),
+                    close: parseFloat(close.toFixed(4))
+                });
+
+                basePrice = close;
+            }
+
+            return candles;
+        }
+
+        // Mini-sparkline Forex
+        const forexData = [
+            { pair: 'EURUSD', history: [1.0900, 1.0920, 1.0980, 1.0970, 1.0950, 1.1030] },
+            { pair: 'GBPUSD', history: [1.3000, 1.3020, 1.2980, 1.3000, 1.3050, 1.3030] },
+            { pair: 'USDJPY', history: [110.00, 110.20, 109.80, 110.10, 110.50, 110.30] },
+            { pair: 'USDCHF', history: [0.9200, 0.9180, 0.9220, 0.9200, 0.9150, 0.9170] },
+            { pair: 'AUDUSD', history: [0.7500, 0.7520, 0.7480, 0.7500, 0.7550, 0.7530] }
+        ];
+
+        forexData.forEach(fx => {
+            const ctx = document.getElementById('spark_' + fx.pair);
+            if (ctx) {
+                const data = fx.history;
+                new Chart(ctx, {
+                    type: "line",
+                    data: {
+                        labels: data.map((_, i) => i),
+                        datasets: [{
+                            data: data,
+                            borderColor: data[0] <= data[data.length - 1] ? "#198754" : "#dc3545",
+                            borderWidth: 1.5,
+                            fill: false,
+                            tension: 0.3,
+                            pointRadius: 0
+                        }]
+                    },
+                    options: {
+                        responsive: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { display: false },
+                            y: { display: false }
+                        }
+                    }
+                });
+            }
+        });
+
+        // Khởi tạo chart với dữ liệu thật
+        createCustomCandlestickChart();
+
+        // Auto-refresh dữ liệu mỗi 60 giây
+        setInterval(createCustomCandlestickChart, 60000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+<div class="modal fade" id="insightModal" tabindex="-1" aria-labelledby="insightModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="insightModalLabel">{{ insight.title }}</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Hiển thị thông tin insight -->
+                <div class="row">
+                    <div class="col-md-8">
+                        <p><strong>Summary:</strong> {{ insight.summary }}</p>
+                        <p><strong>Category:</strong> {{ insight.get_category_display }}</p>
+                        <p><strong>Result:</strong> {{ insight.get_result_display }}</p>
+                        <p><strong>Date:</strong> {{ insight.date|date:"Y-m-d H:i" }}</p>
+                    </div>
+                </div>
+                
+                <!-- HIỂN THỊ FILE ĐÍNH KÈM -->
+                {% if insight.has_attachment %}
+                <div class="mt-3">
+                    <h6>Attached File:</h6>
+                    <div class="border p-3 rounded">
+                        {% if insight.is_image %}
+                            <!-- Hiển thị ảnh -->
+                            <img src="{{ insight.attached_image.url }}" 
+                                 alt="Attached image" 
+                                 style="max-width: 100%; max-height: 400px;"
+                                 class="img-fluid rounded">
+                            <div class="mt-2">
+                                <a href="{{ insight.attached_image.url }}" 
+                                   target="_blank" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View Full Size
+                                </a>
+                            </div>
+                        {% else %}
+                            <!-- Hiển thị thông tin file -->
+                            <div class="d-flex align-items-center">
+                                <i class="fas fa-file me-2"></i>
+                                <div>
+                                    <strong>{{ insight.file_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">
+                                        {% if insight.attached_file %}
+                                            <a href="{{ insight.attached_file.url }}" 
+                                               target="_blank" 
+                                               class="text-decoration-none">
+                                                Download File
+                                            </a>
+                                        {% endif %}
+                                    </small>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Các phần khác -->
+                {% if insight.reason %}
+                <div class="mt-3">
+                    <h6>Reason:</h6>
+                    <p>{{ insight.reason }}</p>
+                </div>
+                {% endif %}
+                
+                {% if insight.analysis %}
+                <div class="mt-3">
+                    <h6>Analysis:</h6>
+                    <p>{{ insight.analysis }}</p>
+                </div>
+                {% endif %}
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'insights' %}?q={{ insight.title }}" 
+                   class="btn btn-primary">
+                    View in Insights
+                </a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>

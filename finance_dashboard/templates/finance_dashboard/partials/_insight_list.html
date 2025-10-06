@@ -1,0 +1,47 @@
+{# templates/finance_dashboard/partials/_insight_list.html #}
+{% if page_obj.object_list %}
+  <div class="row row-cols-1 row-cols-md-3 g-3">
+    {% for ins in page_obj.object_list %}
+      <div class="col">
+        <div class="card h-100 shadow-sm insight-card" data-insight-id="{{ ins.id }}">
+          <div class="card-body" data-bs-toggle="modal" data-bs-target="#insightModal{{ ins.id }}">
+            <h5 class="card-title">{{ ins.title }}</h5>
+            <p class="card-text text-truncate">{{ ins.summary }}</p>
+            <small class="text-muted">{{ ins.date|date:"M d, Y" }}</small>
+          </div>
+          <div class="card-footer d-flex justify-content-between">
+            <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editInsightModal{{ ins.id }}">Edit</button>
+            <button class="btn btn-sm btn-danger" data-bs-toggle="modal" data-bs-target="#deleteInsightModal{{ ins.id }}">Delete</button>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- Pagination -->
+  <nav class="mt-3">
+    <ul class="pagination">
+      {% if page_obj.has_previous %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ page_obj.previous_page_number }}" hx-get="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ page_obj.previous_page_number }}" hx-target="#insight-results" hx-push-url="true">Previous</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Previous</span></li>
+      {% endif %}
+
+      <li class="page-item disabled">
+        <span class="page-link">Page {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      </li>
+
+      {% if page_obj.has_next %}
+        <li class="page-item">
+          <a class="page-link" href="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ page_obj.next_page_number }}" hx-get="?{% if request.GET %}{{ request.GET.urlencode|safe }}&{% endif %}page={{ page_obj.next_page_number }}" hx-target="#insight-results" hx-push-url="true">Next</a>
+        </li>
+      {% else %}
+        <li class="page-item disabled"><span class="page-link">Next</span></li>
+      {% endif %}
+    </ul>
+  </nav>
+{% else %}
+  <div class="text-center text-muted py-5">Không có insight phù hợp.</div>
+{% endif %}

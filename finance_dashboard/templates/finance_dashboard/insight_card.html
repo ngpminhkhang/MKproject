@@ -1,0 +1,30 @@
+<div class="col-md-4 mb-3 insight-card" data-title="{{ insight.title }}" data-summary="{{ insight.summary }}">
+  <div class="card h-100 shadow-sm" data-bs-toggle="modal" data-bs-target="#insightModal{{ insight.id }}">
+    <div class="card-body">
+      <h5 class="card-title">{{ insight.title }}</h5>
+      <p class="card-text text-truncate">{{ insight.summary }}</p>
+      <small class="text-muted">{{ insight.date|date:"M d, Y" }}</small>
+    </div>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal fade" id="insightModal{{ insight.id }}" tabindex="-1" aria-labelledby="insightModalLabel{{ insight.id }}" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="insightModalLabel{{ insight.id }}">{{ insight.title }}</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p><strong>Category:</strong> {{ insight.category }}</p>
+          <p><strong>Date:</strong> {{ insight.date|date:"M d, Y H:i" }}</p>
+          <hr>
+          <p>{{ insight.details }}</p>
+          {% if insight.result %}
+          <p><strong>Result:</strong> {{ insight.result }}</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

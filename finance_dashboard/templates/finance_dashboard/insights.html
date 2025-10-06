@@ -1,0 +1,286 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Insights{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-2 p-2">
+    
+    <!-- Container cho modal insight -->
+    <div id="insight-modal-container"></div>
+
+    <!-- Container cho modal edit insight -->
+    <div id="edit-insight-modal-container"></div>
+
+    <!-- Container cho modal create insight -->
+    <div id="create-insight-modal-container"></div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Trading Insights</h5>
+                    <div class="d-flex">
+                        <!-- Nút Create Insight -->
+                        <button class="btn btn-sm btn-success me-2 create-insight-btn"
+                                hx-get="{% url 'create_insight' %}"
+                                hx-target="#create-insight-modal-container"
+                                hx-swap="innerHTML">
+                            <i class="fas fa-plus me-1"></i> Create Insight
+                        </button>
+                        <!-- Search Form -->
+                        <form method="GET" class="d-flex">
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="q" class="form-control" placeholder="Search insights..." value="{{ request.GET.q }}">
+                                <button class="btn btn-outline-secondary" type="submit">Search</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                
+                <!-- Filter Tabs -->
+                <div class="card-header py-2">
+                    <div class="d-flex flex-wrap">
+                        <a class="btn btn-sm btn-outline-secondary me-1 mb-1 {% if not request.GET.category %}active{% endif %}" 
+                           href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}category=All">
+                            All
+                        </a>
+                        <a class="btn btn-sm btn-outline-primary me-1 mb-1 {% if request.GET.category == 'currency' %}active{% endif %}" 
+                           href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}category=currency">
+                            Currency
+                        </a>
+                        <a class="btn btn-sm btn-outline-info me-1 mb-1 {% if request.GET.category == 'stock' %}active{% endif %}" 
+                           href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}category=stock">
+                            Stock
+                        </a>
+                        <a class="btn btn-sm btn-outline-warning me-1 mb-1 {% if request.GET.category == 'summary' %}active{% endif %}" 
+                           href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}category=summary">
+                            Summary
+                        </a>
+                        <a class="btn btn-sm btn-outline-dark me-1 mb-1 {% if request.GET.category == 'other' %}active{% endif %}" 
+                           href="?{% if request.GET.q %}q={{ request.GET.q }}&{% endif %}category=other">
+                            Other
+                        </a>
+                    </div>
+                </div>
+
+                <div class="card-body">
+                    
+                    <!-- Insights Grid -->
+                    <div class="row">
+                        {% for insight in page_obj %}
+                        <div class="col-md-6 col-lg-4 mb-3">
+                            <div class="card h-100 insight-card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start mb-2">
+                                        <h6 class="card-title">{{ insight.title|truncatechars:50 }}</h6>
+                                        <!-- THÊM ICON FILE ĐÍNH KÈM -->
+                                        {% if insight.has_attachment %}
+                                        <span class="badge bg-info" title="Has attached file">
+                                            <i class="fas fa-paperclip"></i>
+                                            {% if insight.is_image %}
+                                                <i class="fas fa-image"></i>
+                                            {% else %}
+                                                <i class="fas fa-file"></i>
+                                            {% endif %}
+                                        </span>
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <p class="card-text text-muted small">{{ insight.summary|truncatechars:100 }}</p>
+                                    
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <small class="text-muted">{{ insight.date|date:"M d, Y" }}</small>
+                                        <span class="badge {% if insight.result == 'positive' %}bg-success{% elif insight.result == 'negative' %}bg-danger{% else %}bg-secondary{% endif %}">
+                                            {{ insight.get_result_display }}
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- THÊM THÔNG TIN FILE -->
+                                    {% if insight.has_attachment %}
+                                    <div class="mt-2">
+                                        <small class="text-info">
+                                            <i class="fas fa-paperclip"></i>
+                                            {{ insight.file_name }}
+                                        </small>
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <div class="card-footer bg-transparent">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <button class="btn btn-sm btn-outline-primary view-insight-btn"
+                                                hx-get="{% url 'insight_modal' insight.pk %}"
+                                                hx-target="#insight-modal-container"
+                                                hx-swap="innerHTML">
+                                            <i class="fas fa-eye me-1"></i> View
+                                        </button>
+                                        <div class="btn-group">
+                                            <!-- Nút Edit -->
+                                            <button class="btn btn-sm btn-outline-warning edit-insight-btn"
+                                                    hx-get="{% url 'edit_insight' insight.pk %}"
+                                                    hx-target="#edit-insight-modal-container"
+                                                    hx-swap="innerHTML"
+                                                    title="Edit Insight">
+                                                <i class="fas fa-edit me-1"></i> Edit
+                                            </button>
+                                            <!-- Nút Delete -->
+                                            <button class="btn btn-sm btn-outline-danger delete-insight-btn"
+                                                    onclick="confirmDelete({{ insight.pk }}, '{{ insight.title|escapejs }}')"
+                                                    title="Delete Insight">
+                                                <i class="fas fa-trash me-1"></i> Delete
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="col-12">
+                            <div class="text-center text-muted py-4">
+                                <p>No insights found.</p>
+                                <button class="btn btn-sm btn-success create-insight-btn"
+                                        hx-get="{% url 'create_insight' %}"
+                                        hx-target="#create-insight-modal-container"
+                                        hx-swap="innerHTML">
+                                    <i class="fas fa-plus me-1"></i> Create Your First Insight
+                                </button>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Insights pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Previous</a>
+                            </li>
+                            {% endif %}
+
+                            {% for num in page_obj.paginator.page_range %}
+                            <li class="page-item {% if page_obj.number == num %}active{% endif %}">
+                                <a class="page-link" href="?page={{ num }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">{{ num }}</a>
+                            </li>
+                            {% endfor %}
+
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.q %}&q={{ request.GET.q }}{% endif %}{% if request.GET.category %}&category={{ request.GET.category }}{% endif %}">Next</a>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- JavaScript để xử lý modal -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Xử lý khi click view insight
+    document.querySelectorAll('.view-insight-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimeout(() => {
+                const modalElement = document.getElementById('insightModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }, 100);
+        });
+    });
+
+    // Xử lý khi click edit insight
+    document.querySelectorAll('.edit-insight-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimeout(() => {
+                const modalElement = document.getElementById('editInsightModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }, 100);
+        });
+    });
+
+    // Xử lý khi click create insight
+    document.querySelectorAll('.create-insight-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            setTimeout(() => {
+                const modalElement = document.getElementById('createInsightModal');
+                if (modalElement) {
+                    const modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                }
+            }, 100);
+        });
+    });
+
+    // Xử lý sự kiện khi HTMX hoàn thành request
+    document.body.addEventListener('htmx:afterSwap', function(evt) {
+        console.log('HTMX afterSwap event:', evt.detail.target.id);
+        
+        if (evt.detail.target.id === 'insight-modal-container') {
+            const modalElement = document.getElementById('insightModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            }
+        }
+        if (evt.detail.target.id === 'edit-insight-modal-container') {
+            console.log('Edit modal content loaded, showing modal...');
+            const modalElement = document.getElementById('editInsightModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            } else {
+                console.error('Edit modal element not found!');
+            }
+        }
+        if (evt.detail.target.id === 'create-insight-modal-container') {
+            console.log('Create modal content loaded, showing modal...');
+            const modalElement = document.getElementById('createInsightModal');
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                modal.show();
+            } else {
+                console.error('Create modal element not found!');
+            }
+        }
+    });
+});
+
+// Hàm xác nhận xóa insight
+function confirmDelete(insightId, insightTitle) {
+    if (confirm(`Are you sure you want to delete "${insightTitle}"? This action cannot be undone.`)) {
+        // Gửi request DELETE
+        fetch(`/insights/delete/${insightId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload trang sau khi xóa thành công
+                location.reload();
+            } else {
+                alert('Error deleting insight: ' + (data.errors || 'Unknown error'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting insight');
+        });
+    }
+}
+</script>
+
+{% endblock %}
