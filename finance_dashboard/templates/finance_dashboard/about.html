@@ -7,10 +7,10 @@
 <!-- Sử dụng insights-full-width để full màn hình -->
 <div class="insights-full-width">
     <div class="container-fluid p-0">
-        <!-- Header Section -->
-        <div class="about-header text-center py-4">
-            <h1 class="display-4">MK Project</h1>
-            <p class="lead">Advanced Financial Dashboard for Forex & Stock Analysis</p>
+        <!-- Header Section - ĐÃ ĐỔI MÀU XANH TÀI CHÍNH -->
+        <div class="about-header text-center">
+            <h1 class="display-5 fw-bold">MK Project</h1>
+            <p class="lead mb-0">Advanced Financial Dashboard for Forex & Stock Analysis</p>
         </div>
 
         <!-- Introduction -->
@@ -107,39 +107,45 @@
 .insights-full-width {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: 100vh;
-    padding: 20px 0;
+    padding: 0;
 }
 
+/* HEADER MỚI - MÀU XANH TÀI CHÍNH CHUYÊN NGHIỆP */
 .about-header {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); /* Màu xanh financial blue */
     color: white;
-    padding: 60px 20px !important;
+    padding: 40px 20px !important; /* Giảm chiều cao từ 60px xuống 40px */
     margin-bottom: 40px;
+    border-bottom: 1px solid #0a58ca;
 }
 
 .about-header h1 {
     font-weight: 700;
-    margin-bottom: 15px;
+    margin-bottom: 12px; /* Giảm khoảng cách */
+    font-size: 2.5rem; /* Giảm từ display-4 xuống display-5 */
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 .about-header .lead {
-    font-size: 1.3rem;
-    opacity: 0.9;
+    font-size: 1.1rem; /* Giảm font subtitle */
+    opacity: 0.95;
+    font-weight: 400;
+    margin-bottom: 0;
 }
 
 .feature-icon {
-    color: #667eea;
+    color: #0d6efd; /* Đồng bộ màu xanh chính */
 }
 
 .card {
     border: none;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
     transition: transform 0.3s ease;
 }
 
 .card:hover {
-    transform: translateY(-5px);
+    transform: translateY(-3px);
 }
 
 .bg-light {
@@ -147,29 +153,62 @@
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
     border: none;
-    padding: 12px 30px;
+    padding: 10px 25px;
+    font-weight: 500;
 }
 
 .btn-primary:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    box-shadow: 0 6px 20px rgba(13, 110, 253, 0.3);
+    background: linear-gradient(135deg, #0a58ca 0%, #084298 100%);
+}
+
+.btn-outline-primary {
+    border-color: #0d6efd;
+    color: #0d6efd;
+}
+
+.btn-outline-primary:hover {
+    background: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Gradient cho các card headers khác để đồng bộ */
+.card-header-gradient {
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
 }
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .about-header {
-        padding: 40px 15px !important;
+        padding: 30px 15px !important; /* Giảm thêm trên mobile */
     }
     
     .about-header h1 {
-        font-size: 2.5rem;
+        font-size: 2rem;
+    }
+    
+    .about-header .lead {
+        font-size: 1rem;
     }
     
     .btn-lg {
-        padding: 10px 20px;
-        font-size: 1rem;
+        padding: 8px 20px;
+        font-size: 0.95rem;
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 576px) {
+    .about-header {
+        padding: 25px 15px !important;
+    }
+    
+    .about-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 8px;
     }
 }
 </style>
