@@ -1,0 +1,293 @@
+.fixed-header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    min-height: 80px;
+}
+.content-container {
+    margin-top: 80px !important;
+}
+.fixed-footer {
+    background-color: #f8f9fa;
+    border-top: 1px solid #e7e7e7;
+}
+.header-logo {
+    font-size: 1.5rem;
+}
+.main-nav .nav-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+.sub-nav .nav-link {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+.card {
+    border-radius: 4px;
+}
+.card-header {
+    padding: 0.25rem;
+    font-size: 0.9rem;
+}
+.card-body {
+    padding: 0.25rem;
+    font-size: 0.9rem;
+}
+.input-group-sm .form-control,
+.input-group-sm .input-group-text {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.875rem;
+}
+.list-group-item {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.9rem;
+}
+.table-sm th,
+.table-sm td {
+    padding: 0.25rem;
+}
+.bg-gradient-light {
+    background: linear-gradient(135deg, #f5f7fa 0%, #ffffff 100%);
+}
+.btn-gradient {
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    color: white;
+    border: none;
+    transition: all 0.3s ease;
+}
+.btn-gradient:hover {
+    background: linear-gradient(90deg, #3d9af3, #00d8e4);
+    color: white;
+    transform: translateY(-2px);
+}
+.btn-lg {
+    padding: 0.5rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Insights specific styles */
+.insights-full-width {
+    width: 100%;
+    padding: 0 15px;
+}
+
+.insight-card {
+    transition: all 0.3s ease;
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+}
+
+.insight-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.insight-tag {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 12px;
+}
+
+.insight-summary {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.insight-meta {
+    font-size: 0.85rem;
+    color: #6c757d;
+}
+
+/* Pagination styles */
+.pagination-container {
+    margin-top: 2rem;
+}
+
+.pagination .page-item.active .page-link {
+    background: linear-gradient(90deg, #4facfe, #00f2fe);
+    border-color: #4facfe;
+}
+
+.pagination .page-link {
+    color: #4facfe;
+    border-radius: 4px;
+    margin: 0 2px;
+}
+
+.pagination .page-link:hover {
+    color: #00f2fe;
+    background-color: #f8f9fa;
+}
+
+/* About page styles */
+.about-header {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+
+.feature-icon {
+    font-size: 2.5rem;
+    color: #4facfe;
+    margin-bottom: 1rem;
+}
+
+.team-member {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.team-member img {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 1rem;
+    border: 4px solid #f8f9fa;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Filter and search */
+.filter-container {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.filter-btn {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+/* Full width adjustments */
+.insights-full-width .container-fluid {
+    max-width: 100%;
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+.insights-full-width .row {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.insights-full-width .col-md-6,
+.insights-full-width .col-lg-4 {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Responsive design */
+@media (min-width: 1400px) {
+    .insights-full-width {
+        padding-left: 5%;
+        padding-right: 5%;
+    }
+}
+
+@media (max-width: 768px) {
+    .insights-full-width {
+        padding-left: 10px;
+        padding-right: 10px;
+    }
+    
+    .filter-container .row {
+        margin-left: 0;
+        margin-right: 0;
+    }
+}
+
+.text-sm {
+    font-size: 0.9rem !important;
+}
+
+.form-control-sm {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+    height: calc(1.5em + 0.5rem + 2px) !important;
+}
+
+.w-75 {
+    width: 75% !important;
+}
+
+.card {
+    margin-bottom: 0.5rem;
+}
+
+.card-header, .card-body {
+    padding: 0.25rem;
+}
+
+.table-sm th,
+.table-sm td {
+    padding: 0.25rem;
+    font-size: 0.9rem;
+}
+
+.btn-sm {
+    padding: 0.25rem 0.5rem !important;
+    font-size: 0.875rem !important;
+}
+
+/* Tăng chiều cao cho ô Notes */
+.notes-textarea {
+    min-height: 80px !important; /* Điều chỉnh chiều cao tối thiểu, bạn có thể thay đổi giá trị này */
+    resize: vertical; /* Cho phép kéo dãn theo chiều dọc nếu cần */
+}
+
+.fixed-header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
+            min-height: 80px;
+        }
+        .content-container {
+            margin-top: 80px !important;
+        }
+        .fixed-footer {
+            background-color: #f8f9fa;
+            border-top: 1px solid #e7e7e7;
+        }
+        .header-logo {
+            font-size: 1.5rem;
+        }
+        .main-nav .nav-link {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        .sub-nav .nav-link {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        .card {
+            border-radius: 4px;
+            margin-bottom: 0.5rem;
+        }
+        .card-header {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .card-body {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }
+        .list-group-item {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        .table-sm th,
+        .table-sm td {
+            padding: 0.25rem;
+            font-size: 0.9rem;
+        }

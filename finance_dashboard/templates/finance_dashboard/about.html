@@ -1,0 +1,176 @@
+{% extends "finance_dashboard/base.html" %}
+{% load static %}
+
+{% block title %}About - MK Project{% endblock %}
+
+{% block content %}
+<!-- Sử dụng insights-full-width để full màn hình -->
+<div class="insights-full-width">
+    <div class="container-fluid p-0">
+        <!-- Header Section -->
+        <div class="about-header text-center py-4">
+            <h1 class="display-4">MK Project</h1>
+            <p class="lead">Advanced Financial Dashboard for Forex & Stock Analysis</p>
+        </div>
+
+        <!-- Introduction -->
+        <div class="row mb-5 mx-0">
+            <div class="col-lg-8 mx-auto text-center px-3">
+                <p class="lead">
+                    MK Project is a comprehensive financial dashboard designed for traders and investors to analyze markets,
+                    track portfolios, and document investment strategies.
+                </p>
+                <p>
+                    Developed by Minh Khang, this platform combines real-time data with analytical tools to help you make
+                    informed investment decisions and learn from your trading journal.
+                </p>
+            </div>
+        </div>
+
+        <!-- Features -->
+        <div class="row mb-5 mx-0">
+            <div class="col-12 text-center mb-4">
+                <h2>Key Features</h2>
+            </div>
+
+            <div class="col-md-4 text-center mb-4 px-3">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-chart-line fa-2x text-primary"></i>
+                </div>
+                <h4>Market Analysis</h4>
+                <p>Detailed technical and fundamental analysis of Forex pairs and stocks with real-time data.</p>
+            </div>
+
+            <div class="col-md-4 text-center mb-4 px-3">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-wallet fa-2x text-success"></i>
+                </div>
+                <h4>Portfolio Tracking</h4>
+                <p>Monitor your investments and analyze performance with intuitive visualization tools.</p>
+            </div>
+
+            <div class="col-md-4 text-center mb-4 px-3">
+                <div class="feature-icon mb-3">
+                    <i class="fas fa-book fa-2x text-info"></i>
+                </div>
+                <h4>Trading Journal</h4>
+                <p>Document your strategies, insights, and lessons learned to improve your trading skills.</p>
+            </div>
+        </div>
+
+        <!-- Developer Info -->
+        <div class="row justify-content-center mb-5 mx-0">
+            <div class="col-md-8 px-3">
+                <div class="card shadow-sm">
+                    <div class="card-body text-center">
+                        <div class="team-member">
+                            <img src="{% static 'images/developer.jpg' %}" alt="Minh Khang" class="rounded-circle mb-3" 
+                                 onerror="this.src='https://via.placeholder.com/120x120/007bff/ffffff?text=MK'" 
+                                 style="width: 120px; height: 120px; object-fit: cover;">
+                            <h4>Minh Khang</h4>
+                            <p class="text-muted">Developer & Financial Analyst</p>
+                            <p>
+                                With a passion for both technology and finance, I created MK Project to help traders
+                                make data-driven decisions and systematically improve their strategies.
+                            </p>
+                            <div class="mt-3">
+                                <a href="https://github.com/ngpminhkhang/MK-Project" class="btn btn-outline-primary me-2" target="_blank">
+                                    <i class="fab fa-github me-1"></i>GitHub
+                                </a>
+                                <a href="#" class="btn btn-outline-info">
+                                    <i class="fab fa-linkedin me-1"></i>LinkedIn
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Call to Action -->
+        <div class="row mx-0">
+            <div class="col-12 text-center px-3">
+                <div class="card bg-light">
+                    <div class="card-body py-4">
+                        <h3>Ready to improve your trading?</h3>
+                        <p>Start using MK Project to analyze markets and track your investment strategies.</p>
+                        <a href="{% url 'portfolio' %}" class="btn btn-primary btn-lg me-3">View Portfolio</a>
+                        <a href="{% url 'insights' %}" class="btn btn-outline-primary btn-lg">Read Insights</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.insights-full-width {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px 0;
+}
+
+.about-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 60px 20px !important;
+    margin-bottom: 40px;
+}
+
+.about-header h1 {
+    font-weight: 700;
+    margin-bottom: 15px;
+}
+
+.about-header .lead {
+    font-size: 1.3rem;
+    opacity: 0.9;
+}
+
+.feature-icon {
+    color: #667eea;
+}
+
+.card {
+    border: none;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    transition: transform 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-5px);
+}
+
+.bg-light {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%) !important;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+    padding: 12px 30px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .about-header {
+        padding: 40px 15px !important;
+    }
+    
+    .about-header h1 {
+        font-size: 2.5rem;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+}
+</style>
+{% endblock %}

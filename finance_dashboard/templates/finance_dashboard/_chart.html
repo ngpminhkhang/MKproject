@@ -1,0 +1,42 @@
+<script>
+  const cotData = JSON.parse('{{ cot|safe }}');
+  const yieldData = JSON.parse('{{ yield_data|safe }}');
+
+  // COT chart (EUR Futures)
+  const ctx1 = document.getElementById('cotChart').getContext('2d');
+  new Chart(ctx1, {
+    type: 'line',
+    data: {
+      labels: cotData.map(d => d.Report_Date_as_MM_DD_YYYY),
+      datasets: [
+        {
+          label: "Non-Comm Long",
+          data: cotData.map(d => d.NonComm_Positions_Long_All),
+          borderColor: 'blue',
+          fill: false
+        },
+        {
+          label: "Non-Comm Short",
+          data: cotData.map(d => d.NonComm_Positions_Short_All),
+          borderColor: 'red',
+          fill: false
+        }
+      ]
+    }
+  });
+
+  // US10Y chart
+  const ctx2 = document.getElementById('yieldChart').getContext('2d');
+  new Chart(ctx2, {
+    type: 'line',
+    data: {
+      labels: Object.keys(yieldData["Close"] || {}),
+      datasets: [{
+        label: "US10Y Yield",
+        data: Object.values(yieldData["Close"] || {}),
+        borderColor: 'green',
+        fill: false
+      }]
+    }
+  });
+</script>

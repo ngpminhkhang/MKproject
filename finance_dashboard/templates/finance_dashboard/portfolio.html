@@ -1,0 +1,648 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load widget_tweaks %}
+{% load static %}
+
+{% block title %}Portfolio{% endblock %}
+
+{% block extra_css %}
+<style>
+/* CSS styles từ file portfolio.pdf - giữ nguyên */
+.insights-full-width {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 15px;
+}
+
+.container-fluid > .card {
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border: none;
+    margin-bottom: 15px;
+}
+
+.card.shadow-sm {
+    transition: transform 0.2s ease-in-out;
+    border-radius: 8px;
+}
+
+.card.shadow-sm:hover {
+    transform: translateY(-2px);
+}
+
+/* Màu cho các tab */
+.btn-outline-secondary.active {
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+
+.btn-outline-success.active {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+.btn-outline-info.active {
+    background-color: #0dcaf0;
+    border-color: #0dcaf0;
+}
+
+/* Điều chỉnh bảng */
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.8rem;
+}
+
+.table td {
+    font-size: 0.8rem;
+    vertical-align: middle;
+}
+
+/* Form controls */
+.form-control, .form-select {
+    border-radius: 5px;
+    border: 1px solid #ced4da;
+    font-size: 0.8rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #86b7fe;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Analytics cards colors */
+.bg-analytics-primary { background-color: #e3f2fd; }
+.bg-analytics-success { background-color: #e8f5e8; }
+.bg-analytics-info { background-color: #e0f2f1; }
+.bg-analytics-warning { background-color: #fff3e0; }
+.bg-analytics-danger { background-color: #ffebee; }
+
+.notes-textarea {
+    min-height: 60px;
+    resize: vertical;
+}
+
+/* Style cho thông báo guest */
+.guest-notice {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 8px;
+    padding: 15px;
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+/* Ẩn các nút action cho khách */
+.guest-mode .btn-group,
+.guest-mode .create-insight-btn,
+.guest-mode .edit-insight-btn,
+.guest-mode .delete-insight-btn {
+    display: none !important;
+}
+
+/* Hiển thị chỉ nút View cho khách */
+.guest-mode .view-only-btn {
+    display: inline-block !important;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid insights-full-width mt-2 p-2 {% if not user.is_authenticated %}guest-mode{% endif %}">
+
+<!-- Container để load modal insight chi tiết -->
+<div id="insight-modal-container"></div>
+
+<!-- Thông báo cho khách -->
+{% if not user.is_authenticated %}
+<div class="guest-notice">
+    <i class="fas fa-info-circle me-2"></i>
+    <strong>Public View:</strong> You are viewing the category in public mode, 
+            can only view information, cannot add/edit/delete transactions.
+</div>
+{% endif %}
+
+<!-- Summary Analytics Section -->
+<div class="row text-center mb-3">
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card shadow-sm p-2 border-0 bg-analytics-primary">
+            <h6 class="text-sm text-muted mb-1">Total Trades</h6>
+            <h4 class="text-primary mb-0">{{ analytics_data.0.total_trades|default:'0' }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card shadow-sm p-2 border-0 bg-analytics-success">
+            <h6 class="text-sm text-muted mb-1">Win Rate</h6>
+            <h4 class="text-success mb-0">{{ analytics_data.0.win_rate|default:'0' }}%</h4>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card shadow-sm p-2 border-0 bg-analytics-info">
+            <h6 class="text-sm text-muted mb-1">Expectancy</h6>
+            <h4 class="text-info mb-0">{{ analytics_data.0.expectancy|default:'0' }}R</h4>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card shadow-sm p-2 border-0 bg-analytics-success">
+            <h6 class="text-sm text-muted mb-1">Net PnL</h6>
+            <h4 class="text-success mb-0">{{ analytics_data.0.net_pnl|default:'0' }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card shadow-sm p-2 border-0 bg-analytics-danger">
+            <h6 class="text-sm text-muted mb-1">Max Drawdown</h6>
+            <h4 class="text-danger mb-0">{{ analytics_data.0.max_drawdown|default:'0' }}</h4>
+        </div>
+    </div>
+    <div class="col-md-2 col-6 mb-2">
+        <div class="card shadow-sm p-2 border-0 bg-analytics-warning">
+            <h6 class="text-sm text-muted mb-1">Avg Trade</h6>
+            <h4 class="text-warning mb-0">{{ analytics_data.0.avg_trade|default:'0' }}</h4>
+        </div>
+    </div>
+</div>
+
+<!-- Add Trade Form - CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP -->
+{% if user.is_authenticated %}
+<div class="card p-3 mb-3 border-primary" style="border-left: 4px solid #046efd;">
+    <h5 class="text-sm text-primary mb-3"><i class="fas fa-plus-circle me-2"></i>Add Trade</h5>
+    <form method="post">
+        {% csrf_token %}
+        <!-- Dòng 1: Các trường chính -->
+        <div class="row g-2 align-items-end mb-2">
+            <div class="col-md-2 col-6">
+                {{ trade_form.portfolio.label_tag }} 
+                {{ trade_form.portfolio|add_class:"form-control form-control-sm" }} 
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.category.label_tag }} 
+                {{ trade_form.category|add_class:"form-control form-control-sm" }} 
+            </div>
+            <div class="col-md-2 col-6">
+                <label for="{{trade_form.symbol.id_for_label}}">Symbol</label>
+                {{ trade_form.symbol|add_class:"form-control form-control-sm" }} 
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.side.label_tag }}  
+                {{ trade_form.side|add_class:"form-control form-control-sm" }}  
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.trade_type.label_tag }}  
+                {{ trade_form.trade_type|add_class:"form-control form-control-sm" }}  
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.date.label_tag }}  
+                {{ trade_form.date|add_class:"form-control form-control-sm" }}  
+            </div>
+        </div>
+        <!-- Dòng 2: Các trường giá và số lượng -->
+        <div class="row g-2 align-items-end mb-3">
+            <div class="col-md-2 col-6">
+                {{ trade_form.entry.label_tag }}  
+                {{ trade_form.entry|add_class:"form-control form-control-sm" }}  
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.exit.label_tag }}  
+                {{ trade_form.exit|add_class:"form-control form-control-sm" }}  
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.stoploss.label_tag }}  
+                {{ trade_form.stoploss|add_class:"form-control form-control-sm" }}  
+            </div>
+            <div class="col-md-2 col-6">
+                {{ trade_form.qty.label_tag }} 
+                {{ trade_form.qty|add_class:"form-control form-control-sm" }} 
+            </div>
+            <div class="col-md-4 col-12">
+                {{ trade_form.notes.label_tag }} 
+                {{ trade_form.notes|add_class:"form-control form-control-sm notes-textarea" }} 
+            </div>
+        </div>
+        <!-- Nút Save -->
+        <div class="row">
+            <div class="col-md-2 col-6">
+                <button type="submit" class="btn btn-primary btn-sm w-100">
+                    <i class="fas fa-save me-1"></i>Save Trade
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+{% endif %}
+
+<!-- Trades Table -->
+<div class="card p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="text-sm text-primary mb-0"><i class="fas fa-list me-2"></i>Trades</h5>
+        <!-- Tab buttons - CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP -->
+        {% if user.is_authenticated %}
+        <div class="btn-group btn-group-sm">
+            <a class="btn btn-outline-secondary btn-sm {% if active_tab == 'All' %}active{% endif %}" href="?type=All">All</a>
+            <a class="btn btn-outline-success btn-sm {% if active_tab == 'Live' %}active{% endif %}" href="?type=Live">Live</a>
+            <a class="btn btn-outline-info btn-sm {% if active_tab == 'Backtest' %}active{% endif %}" href="?type=Backtest">Backtest</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Trades table -->
+    <div class="table-responsive">
+        <table class="table table-striped table-sm table-hover">
+            <thead>
+                <tr>
+                    <th class="text-sm">Date</th>
+                    <th class="text-sm">Portfolio</th>
+                    <th class="text-sm">Symbol</th>
+                    <th class="text-sm">Side</th>
+                    <th class="text-sm">Entry</th>
+                    <th class="text-sm">Exit</th>
+                    <th class="text-sm">Stoploss</th>
+                    <th class="text-sm">Qty</th>
+                    <th class="text-sm">PnL</th>
+                    <th class="text-sm">Type</th>
+                    <th class="text-sm">Ref / Insights</th>
+                    {% if user.is_authenticated %}
+                    <th class="text-sm">Actions</th>
+                    {% else %}
+                    <th class="text-sm">View</th>
+                    {% endif %}
+                </tr>
+            </thead>
+            <tbody>
+                {% for portfolio in portfolios %}
+                    {% for trade in portfolio.filtered_trades %}
+                    <tr>
+                        <td class="text-sm">{{ trade.date }}</td>
+                        <td class="text-sm">{{ portfolio.name }}</td>
+                        <td class="text-sm">
+                            <a href="{% url 'details' trade.symbol %}" class="text-decoration-none text-primary">
+                                {{ trade.symbol }}
+                            </a>
+                        </td>
+                        <td class="text-sm">
+                            <span class="badge {% if trade.side == 'BUY' %}bg-success{% else %}bg-danger{% endif %}">
+                                {{ trade.side }}
+                            </span>
+                        </td>
+                        <td class="text-sm">{{ trade.entry }}</td>
+                        <td class="text-sm">{{ trade.exit }}</td>
+                        <td class="text-sm">{{ trade.stoploss|default:"-" }}</td>
+                        <td class="text-sm">{{ trade.qty }}</td>
+                        <td class="text-sm {% if trade.pnl > 0 %}text-success{% elif trade.pnl < 0 %}text-danger{% endif %}">
+                            {{ trade.pnl|default:0 }}
+                        </td>
+                        <td class="text-sm">
+                            <span class="badge {% if trade.trade_type == 'Live' %}bg-success{% else %}bg-info{% endif %}">
+                                {{ trade.trade_type }}  
+                            </span>  
+                        </td>  
+                        <td class="text-sm">  
+                            {% if trade.ref_insight %}  
+                                <a href="{% url 'insight_modal' trade.ref_insight.pk %}"  
+                                    hx-get="{% url 'insight_modal' trade.ref_insight.pk %}"  
+                                    hx-target="#insight-modal-container"  
+                                    hx-swap="innerHTML"  
+                                    class="text-decoration-none text-primary">  
+                                    {{ trade.ref_insight.title | truncatechars:40 }}  
+                                </a>  
+                                <br>  
+                                <small>  
+                                    <a href="{% url 'insights' %}?q={{ trade.ref_insight.title }}" class="text-info">View in Insights</a>  
+                                </small>  
+                            {% else %}  
+                                {% if user.is_authenticated %}  
+                                    <button class="btn btn-sm btn-outline-primary create-insight-btn"  
+                                        data-trade-id="{{ trade.id }}"  
+                                        data-bs-toggle="modal"  
+                                        data-bs-target="#createInsightModal{{ trade.id }}">  
+                                        + Create Insight  
+                                    </button>  
+                                {% else %}
+                                    <span class="text-muted">No insight</span>
+                                {% endif %}
+                            {% endif %}
+                        </td>
+
+                        <!-- Cột Actions/View -->
+                        {% if user.is_authenticated %}
+                        <td class="text-sm">
+                            <div class="btn-group btn-group-sm">
+                                <!-- Nút Edit -->
+                                <button class="btn btn-outline-warning btn-sm edit-trade-btn"
+                                        data-trade-id="{{ trade.id }}"
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#editTradeModal{{ trade.id }}">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                
+                                <!-- Nút Delete -->
+                                <form method="post" action="{% url 'delete_trade' trade.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger btn-sm"
+                                            onclick="return confirm('Are you sure you want to delete this trade?')">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                        {% else %}
+                        <td class="text-sm">
+                            <!-- Chỉ hiển thị nút View cho khách -->
+                            <button class="btn btn-sm btn-outline-primary view-only-btn"
+                                    onclick="viewTradeDetails('{{ trade.symbol }}')">
+                                <i class="fas fa-eye me-1"></i> View
+                            </button>
+                        </td>
+                        {% endif %}
+                    </tr>
+
+                    <!-- Modal Edit Trade (chỉ cho user đã login) -->
+                    {% if user.is_authenticated %}
+                    <div class="modal fade" id="editTradeModal{{ trade.id }}" tabindex="-1" aria-labelledby="editTradeModalLabel{{ trade.id }}" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="editTradeModalLabel{{ trade.id }}">Edit Trade - {{ trade.symbol }}</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="post" action="{% url 'edit_trade' trade.id %}">
+                                        {% csrf_token %}
+                                        
+                                        <!-- Portfolio Selection -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Portfolio</label>
+                                            <select class="form-select" name="portfolio" required>
+                                                {% for portfolio in portfolios %}
+                                                <option value="{{ portfolio.id }}" {% if trade.portfolio.id == portfolio.id %}selected{% endif %}>
+                                                    {{ portfolio.name }}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Symbol</label>
+                                            <input type="text" class="form-control" name="symbol" value="{{ trade.symbol }}" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Side</label>
+                                            <select class="form-select" name="side" required>
+                                                <option value="BUY" {% if trade.side == "BUY" %}selected{% endif %}>BUY</option>
+                                                <option value="SELL" {% if trade.side == "SELL" %}selected{% endif %}>SELL</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Entry</label>
+                                                    <input type="number" step="0.00001" class="form-control" name="entry" value="{{ trade.entry }}" required>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Exit</label>
+                                                    <input type="number" step="0.00001" class="form-control" name="exit" value="{{ trade.exit }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Stoploss</label>
+                                                    <input type="number" step="0.00001" class="form-control" name="stoploss" value="{{ trade.stoploss|default:'' }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Quantity</label>
+                                                    <input type="number" class="form-control" name="qty" value="{{ trade.qty }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Trade Type</label>
+                                                    <select class="form-select" name="trade_type" required>
+                                                        <option value="Live" {% if trade.trade_type == "Live" %}selected{% endif %}>Live</option>
+                                                        <option value="Backtest" {% if trade.trade_type == "Backtest" %}selected{% endif %}>Backtest</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="mb-3">
+                                                    <label class="form-label">Date</label>
+                                                    <input type="date" class="form-control" name="date" value="{{ trade.date|date:'Y-m-d' }}" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="d-grid">
+                                            <button type="submit" class="btn btn-primary">Update Trade</button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Modal for creating insight for this specific trade - CHỈ HIỆN KHI ĐÃ ĐĂNG NHẬP -->
+                    {% if user.is_authenticated %}
+                    <div class="modal fade" id="createInsightModal{{ trade.id }}" tabindex="-1" aria-labelledby="createInsightModalLabel{{ trade.id }}" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title" id="createInsightModalLabel{{ trade.id }}">Create Insight for Trade {{ trade.symbol }}</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form method="POST" action="{% url 'create_insight_from_trade' %}" class="trade-insight-form" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="trade_id" value="{{ trade.id }}">
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Title</label>
+                                            <input type="text" class="form-control" name="title" value="Insight for {{ trade.symbol }} {{ trade.side }} trade" required>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Summary</label>
+                                            <textarea class="form-control" name="summary" rows="2" required>Trade analysis for {{ trade.symbol }} {{ trade.side }} at {{ trade.entry }}</textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Category</label>
+                                            <select class="form-select" name="category" required>
+                                                {% for value, label in insight_form.category.field.choices %}
+                                                <option value="{{ value }}" {% if value == 'currency' %}selected{% endif %}>{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Result</label>
+                                            <select class="form-select" name="result" required>
+                                                {% for value, label in insight_form.result.field.choices %}
+                                                <option value="{{ value }}">{{ label }}</option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Reasons</label>
+                                            <textarea class="form-control" name="reason" rows="3">Technical analysis and market conditions for {{ trade.symbol }}</textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Analysis</label>
+                                            <textarea class="form-control" name="analysis" rows="3">Detailed analysis of the {{ trade.symbol }} {{ trade.side }} trade...</textarea>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Lessons</label>
+                                            <textarea class="form-control" name="lessons" rows="2">Key lessons learned from this trade...</textarea>
+                                        </div>
+                                        
+                                        <!-- File Upload Section -->
+                                        <div class="mb-3">
+                                            <label class="form-label">Attach Image (PNG, JPG, etc.)</label>
+                                            <input type="file" class="form-control" name="attached_image" accept=".png,.jpg,.jpeg,.gif,.bmp" id="attached_image_{{ trade.id }}">
+                                            <div class="form-text">Upload ảnh chart, screenshot, hoặc hình ảnh liên quan</div>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label class="form-label">Or Attach File (PDF, TXT, etc.)</label>
+                                            <input type="file" class="form-control" name="attached_file" accept=".pdf,.txt,.doc,.docx" id="attached_file_{{ trade.id }}">
+                                            <div class="form-text">Upload file phân tích, báo cáo, hoặc tài liệu liên quan</div>
+                                        </div>
+                                        
+                                        <!-- Preview area -->
+                                        <div class="mb-3" id="file-preview-{{ trade.id }}" style="display: none;">
+                                            <label class="form-label">Preview:</label>
+                                            <div class="border p-2 rounded">
+                                                <img id="image-preview-{{ trade.id }}" src="#" alt="Preview" style="max-width: 100%; max-height: 200px; display: none;">
+                                                <div id="file-info-{{ trade.id }}"></div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="mb-3 form-check">
+                                            <input type="checkbox" class="form-check-input" name="auto_fill_metrics" checked>
+                                            <label class="form-check-label">Auto-fill metrics from trade data</label>
+                                        </div>
+                                        
+                                        <button type="submit" class="btn btn-primary w-100">Save Insight</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endfor %}
+                {% empty %}
+                <tr>
+                    <td colspan="{% if user.is_authenticated %}12{% else %}12{% endif %}" class="text-center text-sm py-4">
+                        <i class="fas fa-inbox fa-2x text-muted mb-2"></i><br>
+                        No trades yet
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Hàm xem chi tiết trade (cho khách)
+    function viewTradeDetails(symbol) {
+        window.location.href = '{% url 'details' 'SYMBOL_PLACEHOLDER' %}'.replace('SYMBOL_PLACEHOLDER', symbol);
+    }
+
+    // Xử lý preview file trước khi upload
+    document.querySelectorAll('input[type="file"]').forEach(input => {
+        input.addEventListener('change', function(e) {
+            const tradeId = this.id.split('_').pop(); // Lấy trade ID từ ID của input
+            const previewDiv = document.getElementById('file-preview-' + tradeId);
+            const imagePreview = document.getElementById('image-preview-' + tradeId);
+            const fileInfo = document.getElementById('file-info-' + tradeId);
+            
+            if (this.files && this.files[0]) {
+                const file = this.files[0];
+                const fileType = file.type;
+                
+                // Hiển thị preview div
+                previewDiv.style.display = 'block';
+                fileInfo.innerHTML = '<strong>File:</strong> ' + file.name + '<br>' +
+                                    '<strong>Size:</strong> ' + (file.size / 1024).toFixed(2) + ' KB<br>' +
+                                    '<strong>Type:</strong> ' + (file.type || 'Unknown');
+                
+                // Nếu là image, hiển thị preview
+                if (fileType.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        imagePreview.src = e.target.result;
+                        imagePreview.style.display = 'block';
+                    }
+                    reader.readAsDataURL(file);
+                } else {
+                    imagePreview.style.display = 'none';
+                }
+            } else {
+                previewDiv.style.display = 'none';
+            }
+        });
+    });
+
+    // Xử lý form tạo insight từ trade (có file upload)
+    document.querySelectorAll('.trade-insight-form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            fetch(this.action, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const modalId = this.closest('.modal').id;
+                    const modal = bootstrap.Modal.getInstance(document.getElementById(modalId));
+                    modal.hide();
+                    
+                    let message = 'Insight created successfully!';
+                    if (data.has_attachment) {
+                        message += ` File "${data.file_name}" uploaded.`;
+                    }
+                    
+                    alert(message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + JSON.stringify(data.errors || 'Unknown error'));
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Submission failed: ' + error);
+            });
+        });
+    });
+
+    // Gán hàm vào global scope để có thể gọi từ onclick
+    window.viewTradeDetails = viewTradeDetails;
+});
+</script>
+
+{% endblock %}

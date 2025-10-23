@@ -1,0 +1,157 @@
+{% extends "finance_dashboard/base.html" %}
+
+{% load static %}
+
+{% block title %}{{ symbol }} - Details{% endblock %}
+
+{% block content %}
+
+<div class="container-fluid mt-2 p-2">
+
+<!-- Container để load modal insight chi tiết -->
+<div id="insight-modal-container"></div>
+
+<h4 class="mb-3">Details for {{ symbol }}</h4>
+
+<div class="row g-2">
+
+<!-- Price Chart -->
+<div class="col-md-8">
+    <div class="card shadow-sm">
+        <div class="card-header">Price Chart</div>
+        <div class="card-body">
+            {% if labels and values %}
+            <canvas id="chart_{{ safe_id }}" height="300"></canvas>
+            {% else %}
+            <p class="text-muted">No price data available.</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Key Metrics -->
+<div class="col-md-4">
+    <div class="card shadow-sm">
+        <div class="card-header">Key Metrics</div>
+        <ul class="list-group list-group-flush">
+            {% if metrics %}
+            {% for k,v in metrics.items %}
+            <li class="list-group-item d-flex justify-content-between">
+                <span>{{ k }}</span>
+                <span>{{ v }}</span>
+            </li>
+            {% endfor %}
+            {% else %}
+            <li class="list-group-item text-muted">No metrics available</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+</div>
+
+<!-- Trades List -->
+<div class="row mt-3">
+    <div class="col-md-12">
+        <div class="card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Trades for {{ symbol }}</span>
+                <a href="{% url 'portfolio' %}" class="btn btn-sm btn-outline-primary">Back to Portfolio</a>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-striped table-sm mb-0">
+                    <thead>
+                        <tr>
+                            <th class="text-sm">Date</th>
+                            <th class="text-sm">Portfolio</th>
+                            <th class="text-sm">Side</th>
+                            <th class="text-sm">Entry</th>
+                            <th class="text-sm">Exit</th>
+                            <th class="text-sm">PnL</th>
+                            <th class="text-sm">Type</th>
+                            <th class="text-sm">Ref/Insights</th>
+                            <th class="text-sm">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for trade in trades %}
+                        <tr>
+                            <td class="text-sm">{{ trade.date|date:"Y-m-d" }}</td>
+                            <td class="text-sm">{{ trade.portfolio.name }}</td>
+                            <td class="text-sm">{{ trade.side }}</td>
+                            <td class="text-sm">{{ trade.entry }}</td>
+                            <td class="text-sm">{{ trade.exit }}</td>
+                            <td class="text-sm {% if trade.pnl > 0 %}text-success{% elif trade.pnl < 0 %}text-danger{% endif %}">
+                                {{ trade.pnl }}
+                            </td>
+                            <td class="text-sm">{{ trade.trade_type }}</td>
+                            <td class="text-sm">
+                                {% if trade.ref %}
+                                    {% if 'Insight #' in trade.ref %}
+                                    <a href="{% url 'insight_model' trade.ref|cut:'Insight #' %}"
+                                    hx-get="{% url 'insight_model' trade.ref|cut:'Insight #' %}"
+                                    hx-target="#insight-modal-container"
+                                    hx-swap="innerHTML"
+                                    class="text-decoration-none text-info">
+                                        {{ trade.ref }}
+                                    </a>
+                                    {% else %}
+                                    <span class="text-info">{{ trade.ref }}</span>
+                                    {% endif %}
+                                {% else %}
+                                <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td class="text-sm">
+                                <form method="POST" action="{% url 'delete_trade' trade.id %}" class="d-inline">
+                                    {% csrf_token %}
+                                    <button type="submit"
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="return confirm('Are you sure you want to delete this trade?')">
+                                        Delete
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="9" class="text-center text-muted">No trades found for this symbol.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function(){
+    {% if labels and values %}
+    new Chart(document.getElementById("chart_{{ safe_id }}"), {
+        type: "line",
+        data: {
+            labels: {{ labels|safe }},
+            datasets: [{
+                label: "{{ symbol }}",
+                data: {{ values|safe }},
+                borderColor: "rgba(75,192,192,1)",
+                backgroundColor: "rgba(75,192,192,0.2)",
+                tension: 0.1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false
+        }
+    });
+    {% endif %}
+});
+</script>
+
+{% endblock %}

@@ -1,0 +1,543 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Market Dashboard - MK Project{% endblock %}
+
+{% block extra_head %}
+<style>
+/* === VARIABLES & RESET === */
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --dark-gradient: linear-gradient(135deg, #4c6ef5 0%, #15aabf 100%);
+}
+
+.dashboard-container {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: calc(100vh - 120px);
+    padding: 20px 15px;
+}
+
+/* === MAIN LAYOUT === */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+    gap: 20px;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+/* === CARDS STYLING === */
+.dashboard-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: none;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+}
+
+.card-header-gradient {
+    background: var(--primary-gradient);
+    color: white;
+    padding: 12px 20px;
+    border-bottom: none;
+}
+
+.card-header-success {
+    background: var(--success-gradient);
+}
+
+.card-header-warning {
+    background: var(--warning-gradient);
+}
+
+.card-header-dark {
+    background: var(--dark-gradient);
+}
+
+/* === INDICATOR CARDS === */
+.indicator-card {
+    text-align: center;
+    padding: 15px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.9);
+    transition: all 0.3s ease;
+}
+
+.indicator-card:hover {
+    background: white;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.indicator-value {
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin: 8px 0;
+}
+
+.indicator-change {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* === SPARKLINES === */
+.sparkline-container {
+    height: 30px;
+    width: 80px;
+}
+
+/* === RISK INDICATOR === */
+.risk-meter {
+    width: 100%;
+    height: 8px;
+    background: linear-gradient(to right, #28a745, #ffc107, #dc3545);
+    border-radius: 10px;
+    margin: 10px 0;
+    position: relative;
+}
+
+.risk-indicator {
+    position: absolute;
+    top: -4px;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border: 3px solid #007bff;
+    border-radius: 50%;
+    transition: all 0.5s ease;
+}
+
+/* === RESPONSIVE DESIGN === */
+@media (max-width: 1200px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+        gap: 15px;
+    }
+    
+    .chart-container {
+        height: 400px;
+    }
+}
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: 15px 10px;
+    }
+    
+    .indicator-value {
+        font-size: 1.2rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <!-- MARKET OVERVIEW HEADER -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="dashboard-card">
+                <div class="card-header card-header-gradient text-center">
+                    <h4 class="mb-0"><i class="fas fa-chart-line me-2"></i>Live Market Overview</h4>
+                    <small class="opacity-75">Real-time financial data & analysis</small>
+                </div>
+                <div class="card-body py-3">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Market Status:</span>
+                                <span class="badge bg-success" id="market-status">OPEN</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Last Update:</span>
+                                <span id="last-update">{% now "H:i:s" %}</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Risk Sentiment:</span>
+                                <span class="badge bg-warning text-dark" id="global-risk">NEUTRAL</span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="text-muted">Volatility:</span>
+                                <span id="global-volatility">MEDIUM</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD GRID -->
+    <div class="dashboard-grid">
+        
+        <!-- LEFT COLUMN: INDICES & FOREX -->
+        <div class="left-column">
+            <!-- MARKET INDICATORS -->
+            <div class="dashboard-card mb-4">
+                <div class="card-header card-header-success">
+                    <h6 class="mb-0"><i class="fas fa-chart-bar me-2"></i>Key Indicators</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="indicator-card">
+                                <small class="text-muted d-block">VIX</small>
+                                <div class="indicator-value text-danger" id="vix-value">20.15</div>
+                                <div class="indicator-change text-danger">+2.5%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="indicator-card">
+                                <small class="text-muted d-block">S&P 500</small>
+                                <div class="indicator-value text-success" id="sp500-value">4,567.89</div>
+                                <div class="indicator-change text-success">+0.8%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="indicator-card">
+                                <small class="text-muted d-block">Gold</small>
+                                <div class="indicator-value text-warning" id="gold-value">1,832.50</div>
+                                <div class="indicator-change text-success">+0.3%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="indicator-card">
+                                <small class="text-muted d-block">DXY</small>
+                                <div class="indicator-value text-info" id="dxy-value">104.20</div>
+                                <div class="indicator-change text-danger">-0.2%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- FOREX MAJORS -->
+            <div class="dashboard-card">
+                <div class="card-header card-header-dark">
+                    <h6 class="mb-0"><i class="fas fa-exchange-alt me-2"></i>Forex Majors</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Pair</th>
+                                    <th>Price</th>
+                                    <th>Change</th>
+                                    <th>Chart</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td><strong>EUR/USD</strong></td>
+                                    <td id="price-EURUSD">1.0850</td>
+                                    <td>
+                                        <span class="badge bg-success">+0.12%</span>
+                                    </td>
+                                    <td>
+                                        <div class="sparkline-container">
+                                            <canvas id="spark-EURUSD"></canvas>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>GBP/USD</strong></td>
+                                    <td id="price-GBPUSD">1.2650</td>
+                                    <td>
+                                        <span class="badge bg-danger">-0.08%</span>
+                                    </td>
+                                    <td>
+                                        <div class="sparkline-container">
+                                            <canvas id="spark-GBPUSD"></canvas>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td><strong>USD/JPY</strong></td>
+                                    <td id="price-USDJPY">148.50</td>
+                                    <td>
+                                        <span class="badge bg-success">+0.25%</span>
+                                    </td>
+                                    <td>
+                                        <div class="sparkline-container">
+                                            <canvas id="spark-USDJPY"></canvas>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MIDDLE COLUMN: MAIN CHART -->
+        <div class="middle-column">
+            <div class="dashboard-card">
+                <div class="card-header card-header-gradient d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-chart-candlestick me-2"></i>Live Chart</h6>
+                    <div class="d-flex gap-2">
+                        <select class="form-select form-select-sm" id="timeframe-select" style="width: auto;">
+                            <option value="1h">1H</option>
+                            <option value="4h">4H</option>
+                            <option value="1d" selected>1D</option>
+                            <option value="1w">1W</option>
+                        </select>
+                        <select class="form-select form-select-sm" id="asset-select" style="width: auto;">
+                            <option value="EURUSD">EUR/USD</option>
+                            <option value="GBPUSD">GBP/USD</option>
+                            <option value="USDJPY">USD/JPY</option>
+                            <option value="XAUUSD">Gold</option>
+                            <option value="SPX">S&P 500</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container" style="height: 400px;">
+                        <canvas id="main-chart"></canvas>
+                    </div>
+                    <div class="row mt-3 text-center">
+                        <div class="col-4">
+                            <small class="text-muted">High</small>
+                            <div class="fw-bold text-success" id="chart-high">1.0875</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Low</small>
+                            <div class="fw-bold text-danger" id="chart-low">1.0820</div>
+                        </div>
+                        <div class="col-4">
+                            <small class="text-muted">Volume</small>
+                            <div class="fw-bold text-info" id="chart-volume">1.2M</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: RISK & NEWS -->
+        <div class="right-column">
+            <!-- RISK SENTIMENT -->
+            <div class="dashboard-card mb-4">
+                <div class="card-header card-header-warning">
+                    <h6 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i>Risk Sentiment</h6>
+                </div>
+                <div class="card-body text-center">
+                    <div class="risk-meter">
+                        <div class="risk-indicator" id="risk-indicator" style="left: 50%;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <small class="text-success">Risk-On</small>
+                        <small class="text-danger">Risk-Off</small>
+                    </div>
+                    <div class="badge bg-warning text-dark fs-6 mb-3" id="risk-text">NEUTRAL</div>
+                    
+                    <div class="text-start small">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>VIX Level:</span>
+                            <span class="fw-bold" id="risk-vix">20.15</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Gold (Safe):</span>
+                            <span class="fw-bold" id="risk-gold">1,832.50</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>10Y Yield:</span>
+                            <span class="fw-bold" id="risk-yield">4.25%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MARKET NEWS -->
+            <div class="dashboard-card">
+                <div class="card-header card-header-dark">
+                    <h6 class="mb-0"><i class="fas fa-newspaper me-2"></i>Market News</h6>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <small class="text-primary">Reuters</small>
+                                <small class="text-muted">10:30</small>
+                            </div>
+                            <p class="mb-1 small">Fed signals potential rate cuts in 2024</p>
+                        </a>
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <small class="text-primary">Bloomberg</small>
+                                <small class="text-muted">09:45</small>
+                            </div>
+                            <p class="mb-1 small">ECB maintains hawkish stance on inflation</p>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    console.log("Initializing Professional Market Dashboard...");
+
+    // Initialize main chart
+    initializeMainChart();
+    
+    // Initialize sparklines
+    initializeSparklines();
+    
+    // Start real-time data updates
+    startRealTimeUpdates();
+});
+
+function initializeMainChart() {
+    const ctx = document.getElementById('main-chart');
+    if (!ctx) return;
+
+    // Sample data for the chart
+    const sampleData = {
+        labels: Array.from({length: 24}, (_, i) => `${i}:00`),
+        datasets: [{
+            label: 'EUR/USD',
+            data: Array.from({length: 24}, () => 1.0800 + Math.random() * 0.01),
+            borderColor: '#007bff',
+            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    };
+
+    new Chart(ctx, {
+        type: 'line',
+        data: sampleData,
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: false
+                }
+            }
+        }
+    });
+}
+
+function initializeSparklines() {
+    // Initialize mini sparkline charts for forex pairs
+    const pairs = ['EURUSD', 'GBPUSD', 'USDJPY'];
+    
+    pairs.forEach(pair => {
+        const ctx = document.getElementById(`spark-${pair}`);
+        if (ctx) {
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: Array.from({length: 10}, (_, i) => i),
+                    datasets: [{
+                        data: generateSampleData(10, 0.001),
+                        borderColor: '#198754',
+                        borderWidth: 1.5,
+                        fill: false,
+                        tension: 0.4,
+                        pointRadius: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    }
+                }
+            });
+        }
+    });
+}
+
+function startRealTimeUpdates() {
+    // Simulate real-time data updates
+    setInterval(() => {
+        updateMarketData();
+        updateLastUpdateTime();
+    }, 5000);
+}
+
+function updateMarketData() {
+    // Simulate data updates
+    updateRiskIndicator();
+    
+    // Update random price changes
+    const pairs = ['EURUSD', 'GBPUSD', 'USDJPY'];
+    pairs.forEach(pair => {
+        const element = document.getElementById(`price-${pair}`);
+        if (element) {
+            const currentPrice = parseFloat(element.textContent);
+            const change = (Math.random() - 0.5) * 0.001;
+            const newPrice = currentPrice + change;
+            element.textContent = newPrice.toFixed(4);
+        }
+    });
+}
+
+function updateRiskIndicator() {
+    const indicator = document.getElementById('risk-indicator');
+    const riskText = document.getElementById('risk-text');
+    
+    // Simulate risk changes
+    const riskLevel = Math.random();
+    const position = riskLevel * 100;
+    
+    indicator.style.left = `${position}%`;
+    
+    if (riskLevel < 0.3) {
+        riskText.className = 'badge bg-success fs-6 mb-3';
+        riskText.textContent = 'RISK-ON';
+    } else if (riskLevel < 0.7) {
+        riskText.className = 'badge bg-warning text-dark fs-6 mb-3';
+        riskText.textContent = 'NEUTRAL';
+    } else {
+        riskText.className = 'badge bg-danger fs-6 mb-3';
+        riskText.textContent = 'RISK-OFF';
+    }
+}
+
+function updateLastUpdateTime() {
+    const now = new Date();
+    document.getElementById('last-update').textContent = 
+        now.toLocaleTimeString('en-US', { hour12: false });
+}
+
+// Utility function for sample data
+function generateSampleData(count, volatility) {
+    const data = [1.0];
+    for (let i = 1; i < count; i++) {
+        data.push(data[i-1] + (Math.random() - 0.5) * volatility);
+    }
+    return data;
+}
+</script>
+{% endblock %}

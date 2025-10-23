@@ -1,0 +1,990 @@
+{% extends 'finance_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Market Analysis{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+      
+    <!-- Navigation Tabs -->
+    <ul class="nav nav-pills nav-fill mb-4" id="analysisTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="macro-tab" data-bs-toggle="tab" data-bs-target="#macro" type="button" role="tab" aria-controls="macro" aria-selected="true">
+                <i class="fas fa-globe me-2"></i>Macro Overview
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="technical-tab" data-bs-toggle="tab" data-bs-target="#technical" type="button" role="tab" aria-controls="technical" aria-selected="false">
+                <i class="fas fa-chart-bar me-2"></i>Technical Analysis
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="signals-tab" data-bs-toggle="tab" data-bs-target="#signals" type="button" role="tab" aria-controls="signals" aria-selected="false">
+                <i class="fas fa-bell me-2"></i>Signals & Alerts
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="gainers-tab" data-bs-toggle="tab" data-bs-target="#gainers" type="button" role="tab" aria-controls="gainers" aria-selected="false">
+                <i class="fas fa-trophy me-2"></i>Gainers/Losers
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Contents -->
+    <div class="tab-content" id="analysisTabsContent">
+        <!-- Tab 1: Macro Overview -->
+        <div class="tab-pane fade show active" id="macro" role="tabpanel" aria-labelledby="macro-tab">
+            <div class="row">
+                <!-- Left Column: Macro Cards -->
+                <div class="col-lg-4">
+                    <!-- COT Summary Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-chart-pie me-2"></i>COT Report Summary
+                        </div>
+                        <div class="card-body">
+                            {% if macro_data_raw.COT %}
+                                <p class="mb-2"><strong>Net Positions:</strong> {{ macro_data_raw.COT.net_positions }}</p>
+                                <p class="mb-2"><strong>Long:</strong> {{ macro_data_raw.COT.long_positions|floatformat:0 }}</p>
+                                <p class="mb-0"><strong>Short:</strong> {{ macro_data_raw.COT.short_positions|floatformat:0 }}</p>
+                                <small class="text-muted">{{ macro_data_raw.COT.interpretation }}</small>
+                            {% else %}
+                                <p class="text-muted">COT data not available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Volatility Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-warning text-dark">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Volatility Indicators
+                        </div>
+                        <div class="card-body">
+                            {% if macro_data_raw.VIX %}
+                                <h5 class="text-primary">{{ macro_data_raw.VIX.value }}</h5>
+                                <p class="mb-1">VIX (Volatility Index)</p>
+                                <span class="badge bg-{% if macro_data_raw.VIX.signal == 'Low' %}success{% elif macro_data_raw.VIX.signal == 'High' %}danger{% else %}warning{% endif %}">
+                                    {{ macro_data_raw.VIX.signal }}
+                                </span>
+                                <small class="d-block text-muted mt-1">Change: {{ macro_data_raw.VIX.change|floatformat:2 }}%</small>
+                            {% else %}
+                                <p class="text-muted">VIX data not available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Equity Indices Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-success text-white">
+                            <i class="fas fa-chart-line me-2"></i>Equity Indices
+                        </div>
+                        <div class="card-body">
+                            {% if macro_data_raw.SP500 %}
+                                <div class="mb-2">
+                                    <strong>S&P 500:</strong> {{ macro_data_raw.SP500.value|floatformat:2 }}
+                                    <span class="badge bg-{% if macro_data_raw.SP500.signal == 'Bullish' %}success{% else %}danger{% endif %} ms-2">
+                                        {{ macro_data_raw.SP500.signal }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                            {% if macro_data_raw.SPY %}
+                                <div class="mb-0">
+                                    <strong>SPY:</strong> {{ macro_data_raw.SPY.value|floatformat:2 }}
+                                    <span class="badge bg-{% if macro_data_raw.SPY.signal == 'Bullish' %}success{% else %}danger{% endif %} ms-2">
+                                        {{ macro_data_raw.SPY.signal }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Bonds & Yields Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-percentage me-2"></i>Bonds & Yields
+                        </div>
+                        <div class="card-body">
+                            {% if macro_data_raw.US10Y %}
+                                <div class="mb-2">
+                                    <strong>US10Y Yield:</strong> {{ macro_data_raw.US10Y.value }}%
+                                    <span class="badge bg-{% if macro_data_raw.US10Y.signal == 'Rising' %}warning{% else %}info{% endif %} ms-2">
+                                        {{ macro_data_raw.US10Y.signal }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                            {% if macro_data_raw.TLT %}
+                                <div class="mb-0">
+                                    <strong>TLT:</strong> {{ macro_data_raw.TLT.value|floatformat:2 }}
+                                    <span class="badge bg-{% if macro_data_raw.TLT.signal == 'Bullish' %}success{% else %}danger{% endif %} ms-2">
+                                        {{ macro_data_raw.TLT.signal }}
+                                    </span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Commodities Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-secondary text-white">
+                            <i class="fas fa-coins me-2"></i>Commodities
+                        </div>
+                        <div class="card-body">
+                            {% if macro_data_raw.Gold %}
+                                <h5 class="text-warning">{{ macro_data_raw.Gold.value|floatformat:2 }}</h5>
+                                <p class="mb-1">Gold (Safe-Haven Asset)</p>
+                                <span class="badge bg-{% if macro_data_raw.Gold.signal == 'Bullish' %}success{% else %}danger{% endif %}">
+                                    {{ macro_data_raw.Gold.signal }}
+                                </span>
+                                <small class="d-block text-muted mt-1">Change: {{ macro_data_raw.Gold.change|floatformat:2 }}%</small>
+                            {% else %}
+                                <p class="text-muted">Gold data not available</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Charts and Summary -->
+                <div class="col-lg-8">
+                    <!-- Macro Chart Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header">
+                            <i class="fas fa-chart-area me-2"></i>Macro Indicator Charts
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label for="macroIndicatorSelect" class="form-label">Select Indicator:</label>
+                                <select class="form-select" id="macroIndicatorSelect">
+                                    {% for indicator in macro_indicators %}
+                                        <option value="{{ indicator }}" {% if indicator == selected_macro %}selected{% endif %}>
+                                            {{ indicator }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div style="height: 400px;">
+                                <canvas id="macroChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Macro Summary Table -->
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <i class="fas fa-table me-2"></i>Macro Summary
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Indicator</th>
+                                            <th>Value</th>
+                                            <th>Signal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for item in macro_summary %}
+                                        <tr>
+                                            <td><strong>{{ item.name }}</strong></td>
+                                            <td>{{ item.value }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if item.signal == 'Bullish' or item.signal == 'Rising' or item.signal == 'High' %}success{% elif item.signal == 'Bearish' or item.signal == 'Falling' or item.signal == 'Low' %}danger{% else %}warning{% endif %}">
+                                                    {{ item.signal }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="3" class="text-center text-muted">No macro data available</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 3: Signals & Alerts -->
+        <div class="tab-pane fade" id="signals" role="tabpanel" aria-labelledby="signals-tab">
+            <div class="row">
+                <div class="col-12">
+                    <!-- Alert Banners -->
+                    {% for signal in signals_alerts %}
+                        {% if signal.strength == 'Strong' %}
+                            <div class="alert alert-{% if signal.signal == 'Buy' %}success{% elif signal.signal == 'Sell' %}danger{% else %}warning{% endif %} alert-dismissible fade show" role="alert">
+                                <i class="fas fa-{% if signal.signal == 'Buy' %}arrow-up{% elif signal.signal == 'Sell' %}arrow-down{% else %}exclamation-triangle{% endif %} me-2"></i>
+                                <strong>{{ signal.strength }} {{ signal.signal }} Signal:</strong> {{ signal.pair }} - {{ signal.details }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    <!-- Signals Table -->
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <i class="fas fa-signal me-2"></i>Trading Signals & Alerts
+                            <small class="text-muted ms-2">(Combined Technical & Macro Analysis)</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Pair</th>
+                                            <th>Signal</th>
+                                            <th>Strength</th>
+                                            <th>Risk Sentiment</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for signal in signals_alerts %}
+                                        <tr>
+                                            <td><strong>{{ signal.pair }}</strong></td>
+                                            <td>
+                                                <span class="badge bg-{% if signal.signal == 'Buy' %}success{% elif signal.signal == 'Sell' %}danger{% else %}secondary{% endif %} fs-6">
+                                                    {% if signal.signal == 'Buy' %}
+                                                        <i class="fas fa-arrow-up me-1"></i>{{ signal.signal }}
+                                                    {% elif signal.signal == 'Sell' %}
+                                                        <i class="fas fa-arrow-down me-1"></i>{{ signal.signal }}
+                                                    {% else %}
+                                                        <i class="fas fa-minus me-1"></i>{{ signal.signal }}
+                                                    {% endif %}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if signal.strength == 'Strong' %}primary{% elif signal.strength == 'Medium' %}warning{% else %}secondary{% endif %}">
+                                                    {{ signal.strength }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if signal.risk_sentiment == 'Low Risk' %}success{% elif signal.risk_sentiment == 'High Risk' %}danger{% else %}warning{% endif %}">
+                                                    {{ signal.risk_sentiment }}
+                                                </span>
+                                            </td>
+                                            <td><small>{{ signal.details }}</small></td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="5" class="text-center text-muted">No signals available</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Technical Analysis -->
+        <div class="tab-pane fade" id="technical" role="tabpanel" aria-labelledby="technical-tab">
+            <div class="row">
+                <!-- Left Column: Controls and Indicators -->
+                <div class="col-lg-4">
+                    <!-- Technical Settings Card -->
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fas fa-cogs me-2"></i>Technical Settings
+                        </div>
+                        <div class="card-body">
+                            <form method="get" id="technicalForm">
+                                <!-- Pair Selection -->
+                                <div class="mb-3">
+                                    <label for="pairSelect" class="form-label">Select Pair:</label>
+                                    <select class="form-select" id="pairSelect" name="pair">
+                                        {% for pair in forex_pairs %}
+                                            <option value="{{ pair }}" {% if pair == selected_pair %}selected{% endif %}>
+                                                {{ pair }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <!-- Indicator Selection -->
+                                <div class="mb-3">
+                                    <label for="indicatorSelect" class="form-label">Select Indicator:</label>
+                                    <select class="form-select" id="indicatorSelect" name="indicator">
+                                        {% for indicator in available_indicators %}
+                                            <option value="{{ indicator }}" {% if indicator == selected_indicator %}selected{% endif %}>
+                                                {{ indicator }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                                
+                                <button type="button" class="btn btn-primary w-100" id="applyButton">
+                                    <i class="fas fa-sync-alt me-2"></i>Apply Analysis
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Current Price Card -->
+                    {% if technical_data_raw %}
+                    <div class="card mb-3 shadow-sm">
+                        <div class="card-header bg-info text-white">
+                            <i class="fas fa-dollar-sign me-2"></i>{{ technical_data_raw.pair }} Price
+                        </div>
+                        <div class="card-body">
+                            <h4 class="text-primary">{{ technical_data_raw.price.current }}</h4>
+                            <p class="mb-1">Current Price</p>
+                            <span class="badge bg-{% if technical_data_raw.price.change > 0 %}success{% else %}danger{% endif %}">
+                                {{ technical_data_raw.price.change|floatformat:2 }}%
+                            </span>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Indicators Table -->
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <i class="fas fa-chart-line me-2"></i>Technical Indicators
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover table-sm">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Indicator</th>
+                                            <th>Value</th>
+                                            <th>Signal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% if technical_data_raw %}
+                                            {% for key, indicator in technical_data_raw.indicators.items %}
+                                                {% if indicator.value %}
+                                                <tr>
+                                                    <td><strong>{{ key }}</strong></td>
+                                                    <td>{{ indicator.value }}</td>
+                                                    <td>
+                                                        <span class="badge bg-{% if indicator.signal == 'Bullish' %}success{% elif indicator.signal == 'Bearish' %}danger{% elif indicator.signal == 'Overbought' or indicator.signal == 'Oversold' %}warning{% else %}secondary{% endif %}">
+                                                            {{ indicator.signal }}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                                {% endif %}
+                                            {% endfor %}
+                                        {% else %}
+                                            <tr>
+                                                <td colspan="3" class="text-center text-muted">Select a pair to view indicators</td>
+                                            </tr>
+                                        {% endif %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Chart -->
+                <div class="col-lg-8">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <i class="fas fa-chart-area me-2"></i>Price Chart + Technical Indicators
+                            {% if technical_data_raw %}
+                                <small class="text-muted ms-2">({{ technical_data_raw.pair }})</small>
+                            {% endif %}
+                        </div>
+                        <div class="card-body">
+                            <div style="height: 500px;">
+                                <canvas id="technicalChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tab 4: Gainers/Losers -->
+        <div class="tab-pane fade" id="gainers" role="tabpanel" aria-labelledby="gainers-tab">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card shadow-sm">
+                        <div class="card-header">
+                            <i class="fas fa-trophy me-2"></i>Forex Pairs Performance
+                            <small class="text-muted ms-2">(Real-time data from yfinance)</small>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="gainersLosersTable">
+                                    <thead class="table-dark">
+                                        <tr>
+                                            <th>Pair</th>
+                                            <th>Current Price</th>
+                                            <th>Daily Change %</th>
+                                            <th>Weekly Change %</th>
+                                            <th>Volume Status</th>
+                                            <th>Volatility</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for forex in gainers_losers %}
+                                        <tr class="{% if forex.daily_change > 1 %}table-success{% elif forex.daily_change < -1 %}table-danger{% endif %}">
+                                            <td><strong>{{ forex.pair }}</strong></td>
+                                            <td>{{ forex.current_price }}</td>
+                                            <td>
+                                                <span class="badge bg-{% if forex.daily_change > 1 %}success{% elif forex.daily_change > 0.5 %}info{% elif forex.daily_change > -0.5 %}secondary{% elif forex.daily_change > -1 %}warning{% else %}danger{% endif %} fs-6">
+                                                    {% if forex.daily_change > 0 %}+{% endif %}{{ forex.daily_change }}%
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if forex.weekly_change > 1 %}success{% elif forex.weekly_change > 0.5 %}info{% elif forex.weekly_change > -0.5 %}secondary{% elif forex.weekly_change > -1 %}warning{% else %}danger{% endif %}">
+                                                    {% if forex.weekly_change > 0 %}+{% endif %}{{ forex.weekly_change }}%
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if forex.volume_status == 'High' %}primary{% elif forex.volume_status == 'Medium' %}info{% else %}secondary{% endif %}">
+                                                    {{ forex.volume_status }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <span class="badge bg-{% if forex.volatility == 'High' %}danger{% elif forex.volatility == 'Medium' %}warning{% else %}success{% endif %}">
+                                                    {{ forex.volatility }}
+                                                </span>
+                                            </td>
+                                        </tr>
+                                        {% empty %}
+                                        <tr>
+                                            <td colspan="6" class="text-center text-muted">No forex data available</td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Real data from Django context - handle JSON parsing safely
+        let macroData = {};
+        let technicalData = {};
+        
+        // Parse Django context data safely
+        try {
+            macroData = JSON.parse('{{ macro_data|escapejs }}');
+        } catch (e) {
+            console.error('Error parsing macro data:', e);
+            macroData = {};
+        }
+        
+        try {
+            technicalData = JSON.parse('{{ technical_data|escapejs }}');
+        } catch (e) {
+            console.error('Error parsing technical data:', e);
+            technicalData = {};
+        }
+        
+        // Initialize charts
+        let macroChart = null;
+        let technicalChart = null;
+
+        // Initialize Macro Chart
+        function initMacroChart() {
+            const ctx = document.getElementById('macroChart');
+            if (!ctx) return;
+            
+            const selectedIndicator = document.getElementById('macroIndicatorSelect')?.value || 'VIX';
+            const indicatorData = macroData[selectedIndicator];
+            
+            if (!indicatorData || !indicatorData.history || indicatorData.history.length === 0) {
+                // Show no data message
+                const context = ctx.getContext('2d');
+                context.clearRect(0, 0, ctx.width, ctx.height);
+                context.font = '16px Arial';
+                context.fillStyle = '#666';
+                context.textAlign = 'center';
+                context.fillText('No data available for ' + selectedIndicator, ctx.width/2, ctx.height/2);
+                return;
+            }
+            
+            // Generate labels for the data points
+            const labels = [];
+            const dataLength = indicatorData.history.length;
+            for (let i = dataLength - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toISOString().split('T')[0]);
+            }
+            
+            // Destroy existing chart if it exists
+            if (macroChart) {
+                macroChart.destroy();
+            }
+            
+            macroChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: selectedIndicator,
+                        data: indicatorData.history,
+                        borderColor: '#6f42c1',
+                        backgroundColor: 'rgba(111, 66, 193, 0.1)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.1)'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initialize Technical Chart
+        function initTechnicalChart() {
+            const ctx = document.getElementById('technicalChart');
+            if (!ctx) return;
+            
+            // Destroy existing chart if it exists
+            if (technicalChart) {
+                technicalChart.destroy();
+                technicalChart = null;
+            }
+            
+            if (!technicalData || !technicalData.price || !technicalData.price.history || technicalData.price.history.length === 0) {
+                // Create a minimal chart to show no data message
+                technicalChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Select a pair and click Apply Analysis'],
+                        datasets: [{
+                            label: 'No Data Available',
+                            data: [0],
+                            borderColor: '#ccc',
+                            backgroundColor: 'rgba(204, 204, 204, 0.1)',
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                display: true,
+                                labels: {
+                                    color: '#666'
+                                }
+                            },
+                            tooltip: { enabled: false }
+                        },
+                        scales: {
+                            x: { 
+                                display: true,
+                                grid: { display: false },
+                                ticks: { color: '#666' }
+                            },
+                            y: { 
+                                display: true,
+                                grid: { display: false },
+                                ticks: { color: '#666' }
+                            }
+                        }
+                    }
+                });
+                return;
+            }
+            
+            // Filter out null values from price history
+            const priceHistory = technicalData.price.history.filter(price => price !== null && price !== undefined);
+            const priceLabels = technicalData.labels ? technicalData.labels.slice(-priceHistory.length) : [];
+            
+            if (priceHistory.length === 0) {
+                console.error('No valid price data available');
+                return;
+            }
+            
+            const datasets = [{
+                label: `${technicalData.pair} Price`,
+                data: priceHistory,
+                borderColor: '#007bff',
+                backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                fill: false,
+                tension: 0.4
+            }];
+            
+            // Add selected indicator if available
+            const selectedIndicator = document.getElementById('indicatorSelect')?.value || 'RSI_14';
+            if (technicalData.indicators && technicalData.indicators[selectedIndicator] && technicalData.indicators[selectedIndicator].history && technicalData.indicators[selectedIndicator].history.length > 0) {
+                // Filter out null values from indicator history
+                const indicatorHistory = technicalData.indicators[selectedIndicator].history.filter(val => val !== null && val !== undefined);
+                
+                if (indicatorHistory.length > 0) {
+                    datasets.push({
+                        label: selectedIndicator,
+                        data: indicatorHistory,
+                        borderColor: '#dc3545',
+                        backgroundColor: 'rgba(220, 53, 69, 0.1)',
+                        fill: false,
+                        tension: 0.4,
+                        yAxisID: selectedIndicator.includes('RSI') || selectedIndicator.includes('STOCH') ? 'y1' : 'y'
+                    });
+                }
+            }
+            
+            const scales = {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: false
+                }
+            };
+            
+            // Add second y-axis for oscillators
+            if (selectedIndicator.includes('RSI') || selectedIndicator.includes('STOCH')) {
+                scales.y1 = {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    min: 0,
+                    max: 100,
+                    grid: {
+                        drawOnChartArea: false,
+                    }
+                };
+            }
+            
+            technicalChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: priceLabels,
+                    datasets: datasets
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    },
+                    scales: scales
+                }
+            });
+        }
+
+        // Update Macro Chart
+        function updateMacroChart() {
+            if (!macroChart) {
+                initMacroChart();
+                return;
+            }
+            
+            const selectedIndicator = document.getElementById('macroIndicatorSelect').value;
+            const indicatorData = macroData[selectedIndicator];
+            
+            if (!indicatorData || !indicatorData.history) {
+                // Reinitialize chart to show no data message
+                initMacroChart();
+                return;
+            }
+            
+            // Update labels
+            const dataLength = indicatorData.history.length;
+            const labels = [];
+            for (let i = dataLength - 1; i >= 0; i--) {
+                const date = new Date();
+                date.setDate(date.getDate() - i);
+                labels.push(date.toISOString().split('T')[0]);
+            }
+            
+            macroChart.data.labels = labels;
+            macroChart.data.datasets[0].label = selectedIndicator;
+            macroChart.data.datasets[0].data = indicatorData.history;
+            macroChart.update();
+        }
+
+        // Apply Technical Analysis
+        function applyTechnicalAnalysis() {
+            const selectedPair = document.getElementById('pairSelect').value;
+            const selectedIndicator = document.getElementById('indicatorSelect').value;
+            
+            console.log('Applying technical analysis for:', selectedPair, selectedIndicator);
+            
+            // Show loading state
+            const applyButton = document.getElementById('applyButton');
+            const originalText = applyButton.innerHTML;
+            applyButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+            applyButton.disabled = true;
+            
+            // Make AJAX request to get updated data
+            fetch(`/analysis/ajax/?pair=${selectedPair}&indicator=${selectedIndicator}`)
+                .then(response => {
+                    console.log('Response status:', response.status);
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('AJAX Response:', data); // Debug log
+                    
+                    // Check if request was successful
+                    if (data.success === false) {
+                        console.error('Server returned error:', data.error);
+                        showNotification(data.error || 'Error loading technical data', 'error');
+                        return;
+                    }
+                    
+                    // Update technical data
+                    if (data.technical && data.technical.price && data.technical.indicators) {
+                        technicalData = data.technical;
+                        console.log('Updated technicalData:', technicalData); // Debug log
+                        
+                        // Update indicators table and price card
+                        updateIndicatorsTable();
+                        
+                        // Reinitialize technical chart with new data
+                        initTechnicalChart();
+                        
+                        // Show success message
+                        showNotification(`Technical analysis updated for ${selectedPair}!`, 'success');
+                    } else {
+                        console.error('Invalid technical data structure:', data.technical);
+                        showNotification('Invalid technical data received from server', 'error');
+                    }
+                    
+                    // Update signals if available
+                    if (data.signals && Array.isArray(data.signals)) {
+                        updateSignalsTable(data.signals);
+                    }
+                    
+                    // Update URL without reload
+                    const url = new URL(window.location);
+                    url.searchParams.set('pair', selectedPair);
+                    url.searchParams.set('indicator', selectedIndicator);
+                    window.history.pushState({}, '', url.toString());
+                })
+                .catch(error => {
+                    console.error('Error fetching technical data:', error);
+                    showNotification(`Error loading technical data: ${error.message}`, 'error');
+                })
+                .finally(() => {
+                    // Restore button state
+                    applyButton.innerHTML = originalText;
+                    applyButton.disabled = false;
+                });
+        }
+        
+        // Update indicators table and current price
+        function updateIndicatorsTable() {
+            const tbody = document.querySelector('#technical .table tbody');
+            if (!tbody || !technicalData || !technicalData.indicators) return;
+            
+            // Update current price card
+            if (technicalData.price) {
+                // Update price card header
+                const priceCardHeader = document.querySelector('#technical .card:nth-child(2) .card-header');
+                if (priceCardHeader) {
+                    priceCardHeader.innerHTML = `<i class="fas fa-dollar-sign me-2"></i>${technicalData.pair} Price`;
+                }
+                
+                // Update price value
+                const priceValue = document.querySelector('#technical .card:nth-child(2) .card-body h4');
+                if (priceValue) {
+                    priceValue.textContent = technicalData.price.current;
+                }
+                
+                // Update price change badge
+                const priceChange = document.querySelector('#technical .card:nth-child(2) .card-body .badge');
+                if (priceChange) {
+                    const change = technicalData.price.change;
+                    priceChange.textContent = `${change > 0 ? '+' : ''}${change.toFixed(2)}%`;
+                    priceChange.className = `badge bg-${change > 0 ? 'success' : 'danger'}`;
+                }
+                
+                // Show price card if it was hidden
+                const priceCard = document.querySelector('#technical .card:nth-child(2)');
+                if (priceCard) {
+                    priceCard.style.display = 'block';
+                }
+            }
+            
+            // Update indicators table
+            tbody.innerHTML = '';
+            
+            for (const [key, indicator] of Object.entries(technicalData.indicators)) {
+                if (indicator.value !== null && indicator.value !== undefined) {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${key}</strong></td>
+                        <td>${indicator.value}</td>
+                        <td>
+                            <span class="badge bg-${getSignalBadgeClass(indicator.signal)}">
+                                ${indicator.signal}
+                            </span>
+                        </td>
+                    `;
+                    tbody.appendChild(row);
+                }
+            }
+        }
+        
+        // Update signals table
+        function updateSignalsTable(signals) {
+            const tbody = document.querySelector('#signals .table tbody');
+            if (!tbody) return;
+            
+            tbody.innerHTML = '';
+            
+            signals.forEach(signal => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td><strong>${signal.pair}</strong></td>
+                    <td>
+                        <span class="badge bg-${getSignalBadgeClass(signal.signal)} fs-6">
+                            ${getSignalIcon(signal.signal)} ${signal.signal}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${getStrengthBadgeClass(signal.strength)}">
+                            ${signal.strength}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${getRiskBadgeClass(signal.risk_sentiment)}">
+                            ${signal.risk_sentiment}
+                        </span>
+                    </td>
+                    <td><small>${signal.details}</small></td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Helper functions for badge classes
+        function getSignalBadgeClass(signal) {
+            if (signal === 'Buy' || signal === 'Bullish') return 'success';
+            if (signal === 'Sell' || signal === 'Bearish') return 'danger';
+            if (signal === 'Overbought' || signal === 'Oversold') return 'warning';
+            return 'secondary';
+        }
+        
+        function getStrengthBadgeClass(strength) {
+            if (strength === 'Strong') return 'primary';
+            if (strength === 'Medium') return 'warning';
+            return 'secondary';
+        }
+        
+        function getRiskBadgeClass(risk) {
+            if (risk === 'Low Risk') return 'success';
+            if (risk === 'High Risk') return 'danger';
+            return 'warning';
+        }
+        
+        function getSignalIcon(signal) {
+            if (signal === 'Buy') return '<i class="fas fa-arrow-up me-1"></i>';
+            if (signal === 'Sell') return '<i class="fas fa-arrow-down me-1"></i>';
+            return '<i class="fas fa-minus me-1"></i>';
+        }
+        
+        // Show notification function
+        function showNotification(message, type) {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'warning'} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            // Add to page
+            document.body.appendChild(notification);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.remove();
+                }
+            }, 3000);
+        }
+
+        // Event Listeners
+        document.addEventListener('DOMContentLoaded', function() {
+            // Initialize charts
+            initMacroChart();
+            
+            // Always initialize technical chart (will show "no data" message if no data)
+            initTechnicalChart();
+            
+            // Macro indicator change - use AJAX to update chart
+            const macroSelect = document.getElementById('macroIndicatorSelect');
+            if (macroSelect) {
+                macroSelect.addEventListener('change', function() {
+                    const selectedIndicator = this.value;
+                    
+                    // Make AJAX request to get macro data
+                    fetch(`/analysis/ajax/?macro=${selectedIndicator}`)
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.macro && data.macro.data) {
+                                // Update macro data
+                                macroData[selectedIndicator] = data.macro.data;
+                                
+                                // Update chart
+                                updateMacroChart();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error fetching macro data:', error);
+                            // Fallback to direct update
+                            updateMacroChart();
+                        });
+                });
+            }
+            
+            // Technical analysis apply button
+            const applyButton = document.getElementById('applyButton');
+            if (applyButton) {
+                applyButton.addEventListener('click', applyTechnicalAnalysis);
+            }
+            
+            // Make gainers/losers table sortable if DataTables is available
+            if (typeof $ !== 'undefined' && $.fn.DataTable) {
+                $('#gainersLosersTable').DataTable({
+                    order: [[2, 'desc']], // Sort by daily change descending
+                    pageLength: 10,
+                    responsive: true
+                });
+            }
+        });
+    </script>
+{% endblock %}
