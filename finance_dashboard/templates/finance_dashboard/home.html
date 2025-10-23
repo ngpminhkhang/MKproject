@@ -7,23 +7,23 @@
 <style>
 /* === VARIABLES & RESET === */
 :root {
-    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    --success-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --primary-gradient: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%); /* XANH TÀI CHÍNH */
+    --success-gradient: linear-gradient(135deg, #198754 0%, #146c43 100%);
+    --warning-gradient: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
     --dark-gradient: linear-gradient(135deg, #4c6ef5 0%, #15aabf 100%);
 }
 
 .dashboard-container {
     background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
     min-height: calc(100vh - 120px);
-    padding: 20px 15px;
+    padding: 15px 12px;
 }
 
 /* === MAIN LAYOUT === */
 .dashboard-grid {
     display: grid;
     grid-template-columns: 1fr 2fr 1fr;
-    gap: 20px;
+    gap: 16px;
     max-width: 100%;
     margin: 0 auto;
 }
@@ -31,44 +31,86 @@
 /* === CARDS STYLING === */
 .dashboard-card {
     background: white;
-    border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
     border: none;
     transition: all 0.3s ease;
     overflow: hidden;
 }
 
 .dashboard-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
 }
 
+/* === HEADER MÀU XANH TÀI CHÍNH === */
 .card-header-gradient {
-    background: var(--primary-gradient);
+    background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%) !important;
     color: white;
-    padding: 12px 20px;
+    padding: 10px 16px !important;
     border-bottom: none;
 }
 
+.card-header-gradient h4,
+.card-header-gradient h6 {
+    font-size: 0.95rem !important;
+    font-weight: 600;
+    margin-bottom: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.card-header-gradient small {
+    font-size: 0.75rem !important;
+    opacity: 0.9;
+}
+
+/* Các header khác */
 .card-header-success {
     background: var(--success-gradient);
+    padding: 8px 16px !important;
+    color: white;
 }
 
 .card-header-warning {
     background: var(--warning-gradient);
+    padding: 8px 16px !important;
+    color: black;
 }
 
 .card-header-dark {
     background: var(--dark-gradient);
+    padding: 8px 16px !important;
+    color: white;
 }
 
-/* === INDICATOR CARDS === */
+.card-header-success h6,
+.card-header-warning h6,
+.card-header-dark h6 {
+    font-size: 0.9rem !important;
+    font-weight: 600;
+    margin-bottom: 0;
+    white-space: nowrap;
+}
+
+/* === TYPOGRAPHY SCALING === */
+.dashboard-card .card-body {
+    padding: 12px 16px;
+    font-size: 0.82rem;
+}
+
+/* Indicator cards */
 .indicator-card {
     text-align: center;
-    padding: 15px 10px;
-    border-radius: 10px;
+    padding: 12px 8px;
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.9);
     transition: all 0.3s ease;
+    min-height: 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
 }
 
 .indicator-card:hover {
@@ -77,62 +119,123 @@
 }
 
 .indicator-value {
-    font-size: 1.4rem;
+    font-size: 1.1rem !important;
     font-weight: 700;
-    margin: 8px 0;
+    margin: 6px 0;
+    line-height: 1.2;
 }
 
 .indicator-change {
-    font-size: 0.85rem;
+    font-size: 0.78rem !important;
     font-weight: 600;
+    line-height: 1.2;
 }
 
-/* === SPARKLINES === */
-.sparkline-container {
-    height: 30px;
-    width: 80px;
+/* Table improvements */
+.table {
+    font-size: 0.8rem !important;
+    margin-bottom: 0;
 }
 
-/* === RISK INDICATOR === */
+.table th {
+    padding: 8px 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.table td {
+    padding: 6px 12px;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+/* Risk meter */
 .risk-meter {
     width: 100%;
     height: 8px;
     background: linear-gradient(to right, #28a745, #ffc107, #dc3545);
     border-radius: 10px;
-    margin: 10px 0;
+    margin: 8px 0;
     position: relative;
 }
 
 .risk-indicator {
     position: absolute;
-    top: -4px;
-    width: 16px;
-    height: 16px;
+    top: -3px;
+    width: 14px;
+    height: 14px;
     background: white;
     border: 3px solid #007bff;
     border-radius: 50%;
     transition: all 0.5s ease;
 }
 
+/* Chart container */
+.chart-container {
+    height: 320px;
+}
+
+/* Sparklines */
+.sparkline-container {
+    height: 30px;
+    width: 80px;
+}
+
+/* Badge sizing */
+.badge {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+}
+
+.badge.fs-6 {
+    font-size: 0.85rem !important;
+}
+
+/* Form controls */
+.form-select-sm {
+    font-size: 0.8rem;
+    padding: 4px 8px;
+}
+
+/* News items */
+.list-group-item {
+    padding: 10px 12px;
+}
+
+.list-group-item .small {
+    font-size: 0.78rem;
+    line-height: 1.3;
+}
+
 /* === RESPONSIVE DESIGN === */
 @media (max-width: 1200px) {
     .dashboard-grid {
         grid-template-columns: 1fr;
-        gap: 15px;
+        gap: 12px;
     }
     
     .chart-container {
-        height: 400px;
+        height: 300px;
     }
 }
 
 @media (max-width: 768px) {
     .dashboard-container {
-        padding: 15px 10px;
+        padding: 12px 8px;
     }
     
     .indicator-value {
-        font-size: 1.2rem;
+        font-size: 1rem !important;
+    }
+    
+    .card-header-gradient h4,
+    .card-header-gradient h6 {
+        font-size: 0.9rem !important;
+    }
+    
+    .indicator-card {
+        min-height: 70px;
+        padding: 8px 6px;
     }
 }
 </style>
